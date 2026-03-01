@@ -264,7 +264,8 @@ function playLocalAudio(url) {
 
     localPlayer.onended = function() {
         document.getElementById('startstop-video').innerHTML = "Play";
-        document.getElementById('startstop-video').style.background = "green";
+        document.getElementById('startstop-video').style.background = "var(--accent-play)";
+        toggleAnimation(false); // Add this
     };
 }
 
@@ -295,12 +296,14 @@ function playLocalAtRandomStartTime() {
 
     localPlayer.currentTime = startTime;
     localPlayer.play();
+    toggleAnimation(true);
 
     clearTimeout(playbackTimer); 
     playbackTimer = setTimeout(() => {
         localPlayer.pause();
         document.getElementById('startstop-video').innerHTML = "Play";
         document.getElementById('startstop-video').style.background = "green";
+        toggleAnimation(false);
     }, (endTime - startTime) * 1000); 
 }
 // --- END NEW LOCAL AUDIO LOGIC ---
@@ -381,7 +384,8 @@ document.getElementById('startstop-video').addEventListener('click', function() 
 
     if (this.innerHTML == "Play") {
         this.innerHTML = "Stop";
-        this.style.background = "red";
+        this.style.background = "var(--accent-stop)"; // Updated to use the CSS variable
+        toggleAnimation(true); // Trigger animation!
 
         if (document.getElementById('randomplayback').checked == true) {
             if (currentPlayerType === 'local') {
@@ -398,7 +402,8 @@ document.getElementById('startstop-video').addEventListener('click', function() 
         }
     } else {
         this.innerHTML = "Play";
-        this.style.background = "green";
+        this.style.background = "var(--accent-play)"; // Updated to use the CSS variable
+        toggleAnimation(false); // Stop animation!
 
         if (currentPlayerType === 'local') {
             localPlayer.pause();
@@ -549,6 +554,18 @@ function getCookies() {
         document.getElementById('autoplay').checked = isTrueSet;  
     }
     listCookies();
+}
+
+// --- ANIMATION HELPER ---
+function toggleAnimation(isPlaying) {
+    const eq = document.getElementById('equalizer');
+    if (eq) {
+        if (isPlaying) {
+            eq.classList.add('playing');
+        } else {
+            eq.classList.remove('playing');
+        }
+    }
 }
 
 window.addEventListener("DOMContentLoaded", getCookies());

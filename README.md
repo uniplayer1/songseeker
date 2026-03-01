@@ -14,7 +14,7 @@ By hosting your own music files via a Docker container, you can completely avoid
 Clone this repository to your server:
 ```bash
 git clone https://github.com/uniplayer1/songseeker.git
-cd songseeker-local
+cd songseeker
 ```
 
 ### 2. Prepare Your Music Folder

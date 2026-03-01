@@ -1,291 +1,137 @@
-/* Modern Music Guessing Game Style */
-
-/* Reset & Base */
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* Modern Dark Theme Variables */
+:root {
+  --bg-dark: #121212;
+  --bg-card: #1e1e1e;
+  --text-main: #ffffff;
+  --text-muted: #a0a0a0;
+  --accent-neon: #ff007f; /* Hitster-style neon pink */
+  --accent-play: #1db954; /* Spotify-style green */
+  --accent-stop: #e91429;
+  --accent-wait: #f5a623;
 }
 
 body {
-  font-family: "Montserrat", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  color: #fff;
-  min-height: 100vh;
-  text-align: center;
-  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 20px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 h2 {
-  font-size: 2.8rem;
   font-weight: 800;
+  text-transform: uppercase;
   letter-spacing: 2px;
-  margin-top: 2.5rem;
-  margin-bottom: 1.2rem;
-  background: linear-gradient(90deg, #ff512f 0%, #dd2476 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--accent-neon);
+  margin-bottom: 30px;
+  text-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
 }
 
-a {
-  color: #ff512f;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-a:hover {
-  color: #fff;
-  text-shadow: 0 0 0.5rem #ff512f;
-}
-
-hr {
+/* Modern App Buttons */
+.button, .button_startscan, .button_startstop {
+  background-color: var(--bg-card);
+  color: var(--text-main);
   border: none;
-  height: 0.15rem;
-  background: linear-gradient(90deg, #ff512f 0%, #dd2476 100%);
-  margin: 2rem 0;
-  border-radius: 1rem;
-}
-
-.button,
-.button_startscan,
-.button_startstop {
-  display: inline-block;
-  background: linear-gradient(90deg, #ff512f 0%, #dd2476 100%);
-  color: #fff;
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 0.6rem 1.5rem;
-  margin: 0.7rem 0.5rem;
-  border: none;
-  border-radius: 1.5rem;
-  box-shadow: 0 0.25rem 1rem rgba(221, 36, 118, 0.15);
+  padding: 16px 32px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: transform 0.1s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  margin: 10px 0;
+  width: 90%;
+  max-width: 350px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.button:hover,
-.button_startscan:hover,
-.button_startstop:hover {
-  background: linear-gradient(90deg, #dd2476 0%, #ff512f 100%);
-  transform: scale(1.07);
-}
-
-.button_wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.button:active, .button_startscan:active, .button_startstop:active {
+  transform: scale(0.96);
 }
 
 .button_startscan {
-  width: 8rem;
-  height: 2.5rem;
-  font-size: 1.1rem;
-  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #ff007f, #7000ff);
+  color: white;
 }
 
 .button_startstop {
-  width: 6rem;
-  height: 2.2rem;
-  font-size: 1rem;
-  padding: 0.4rem 0.8rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-color: var(--accent-play);
 }
 
-.button_startstop::before {
-  content: "";
-  display: inline-block;
-  width: 1.2rem;
-  height: 1.2rem;
-  margin-right: 0.5rem;
-  background: url('data:image/svg+xml;utf8,<svg fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="6,4 20,12 6,20" /></svg>')
-    no-repeat center center;
-  background-size: contain;
-}
-
-#qr-reader {
-  position: relative;
-  width: 100%;
-  max-width: 25rem;
-  margin: 2rem auto 1.2rem auto;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 1.2rem;
-  box-shadow: 0 0.4rem 1.5rem rgba(30, 60, 114, 0.15);
-  padding: 1.2rem 0;
-}
-
-#qr-video {
+/* Card Containers for Info and Settings */
+#videoid, #videotitle, #videoduration, #videostart, .settings_div {
+  background-color: var(--bg-card);
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin: 5px 0;
   width: 90%;
-  border-radius: 0.8rem;
-  box-shadow: 0 0.15rem 0.5rem rgba(30, 60, 114, 0.15);
+  max-width: 350px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
-#cancelScanButton {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
-  display: none;
-  background: linear-gradient(90deg, #e95d5d 0%, #ff512f 100%);
-  color: #fff;
-  font-weight: 700;
-  border-radius: 1.2rem;
-  padding: 0.5rem 1.2rem;
-  z-index: 4;
-  border: none;
-  box-shadow: 0 0.15rem 0.5rem rgba(233, 93, 93, 0.15);
+#videotitle span, #video-duration {
+  color: var(--text-main);
+  font-weight: bold;
 }
 
-#videoid,
-#videotitle,
-#videoduration,
-#videostart {
-  display: none;
-  margin: 0.6rem auto;
-  font-size: 1.1rem;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 0.6rem;
-  padding: 0.5rem 0;
-  width: 80%;
-  color: #fff;
+.hidden {
+  display: none !important;
 }
 
-.settings_div {
+hr {
+  border: 0;
+  height: 1px;
+  background: #333;
   width: 100%;
-  max-width: 32rem;
-  margin: 2rem auto 0 auto;
-  background: rgba(255, 255, 255, 0.09);
-  border-radius: 1.1rem;
-  box-shadow: 0 0.15rem 0.8rem rgba(30, 60, 114, 0.12);
-  padding: 1.5rem 0 1rem 0;
-  position: static;
-  display: none;
-  flex-direction: column;
+  max-width: 350px;
+  margin: 20px 0;
 }
 
-.text-block {
-  position: relative;
-  margin-top: 1.1rem;
-  margin-bottom: 1.1rem;
-  padding: 1rem 0.8rem 0.8rem 0.8rem;
-  text-align: center;
-  border: 1px solid #ff512f;
-  border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0.15rem 0.5rem rgba(221, 36, 118, 0.07);
+/* Checkbox Styles */
+input[type="checkbox"] {
+  accent-color: var(--accent-neon);
+  transform: scale(1.2);
+  margin-right: 10px;
 }
 
-.text-block .heading {
-  position: absolute;
-  top: -1.1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0 0.7rem;
-  font-size: 1.1rem;
-  font-weight: 700;
-  background: linear-gradient(90deg, #ff512f 0%, #dd2476 100%);
-  color: #fff;
-  border-radius: 0.6rem;
-  box-shadow: 0 0.15rem 0.5rem rgba(221, 36, 118, 0.07);
-}
-
-input[type="checkbox"],
-input[type="number"] {
-  accent-color: #ff512f;
-  margin: 0 0.5rem;
-  font-size: 1.1rem;
-  border-radius: 0.4rem;
-  border: none;
-}
-
-label {
-  font-size: 1.1rem;
-  color: #fff;
-  margin: 0 0.4rem;
-}
-
-#show_hide_settings {
+/* --- THE EQUALIZER ANIMATION --- */
+.equalizer-container {
   display: flex;
-  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  height: 50px;
+  gap: 6px;
+  margin: 20px 0;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.3s ease;
 }
 
-#playback-duration {
-  width: 3.5rem;
-  font-size: 1.1rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 0.5rem;
-  border: 1px solid #ff512f;
-  background: rgba(255, 255, 255, 0.12);
-  color: #333;
+.equalizer-container.playing {
+  opacity: 1; /* Fade in when playing */
 }
 
-#cookielist {
-  display: none;
+.bar {
+  width: 10px;
+  background: linear-gradient(to top, var(--accent-neon), #ffb6c1);
+  border-radius: 5px 5px 0 0;
+  animation: bounce 0.8s infinite ease-in-out alternate;
+  transform-origin: bottom;
 }
 
-/* Animation for correct/incorrect guess feedback */
+.bar:nth-child(1) { animation-delay: 0.1s; height: 30%; }
+.bar:nth-child(2) { animation-delay: 0.3s; height: 60%; }
+.bar:nth-child(3) { animation-delay: 0.0s; height: 100%; }
+.bar:nth-child(4) { animation-delay: 0.2s; height: 70%; }
+.bar:nth-child(5) { animation-delay: 0.4s; height: 40%; }
 
-@keyframes correct {
-  0% {
-    box-shadow: 0 0 0 0 #4caf50;
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
-  }
-}
-
-@keyframes incorrect {
-  0% {
-    box-shadow: 0 0 0 0 #e95d5d;
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(233, 93, 93, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(233, 93, 93, 0);
-  }
-}
-
-.correct-guess {
-  animation: correct 0.7s;
-}
-
-.incorrect-guess {
-  animation: incorrect 0.7s;
-}
-
-@media screen and (max-width: 768px) {
-  h2 {
-    font-size: 2rem;
-  }
-
-  .settings_div {
-    max-width: 98vw;
-    padding: 0.7rem 0 0.5rem 0;
-  }
-
-  .button_startscan {
-    width: 60vw;
-    height: 2rem;
-    font-size: 1rem;
-  }
-
-  .button_startstop {
-    width: 40vw;
-    height: 1.7rem;
-    font-size: 0.95rem;
-  }
-
-  #qr-reader {
-    max-width: 98vw;
-    padding: 0.6rem 0;
-  }
+@keyframes bounce {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
 }
