@@ -4,8 +4,8 @@
   --bg-card: #1e1e1e;
   --text-main: #ffffff;
   --text-muted: #a0a0a0;
-  --accent-neon: #ff007f; /* Hitster-style neon pink */
-  --accent-play: #1db954; /* Spotify-style green */
+  --accent-neon: #ff007f;
+  --accent-play: #1db954;
   --accent-stop: #e91429;
   --accent-wait: #f5a623;
 }
@@ -26,8 +26,24 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: var(--accent-neon);
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   text-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+}
+
+/* --- FIX 1: CAMERA SCANNER CONSTRAINTS --- */
+#qr-reader {
+  width: 90%;
+  max-width: 350px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--accent-neon);
+  margin-bottom: 20px;
+  background-color: #000;
+}
+#qr-video {
+  width: 100%;
+  display: block; /* Removes bottom spacing gap */
 }
 
 /* Modern App Buttons */
@@ -62,8 +78,22 @@ h2 {
   background-color: var(--accent-play);
 }
 
-/* Card Containers for Info and Settings */
-#videoid, #videotitle, #videoduration, #videostart, .settings_div {
+/* --- FIX 2: HIDE DEBUG INFO BY DEFAULT --- */
+#videoid, #videotitle, #videoduration, #videostart {
+  display: none; /* Hidden until JS turns them on */
+  background-color: var(--bg-card);
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin: 5px 0;
+  width: 90%;
+  max-width: 350px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.settings_div {
   background-color: var(--bg-card);
   padding: 15px 20px;
   border-radius: 12px;
@@ -81,8 +111,40 @@ h2 {
   font-weight: bold;
 }
 
+/* --- FIX 3A: LET JAVASCRIPT OPEN THE SETTINGS --- */
 .hidden {
-  display: none !important;
+  display: none; /* Removed !important so JS can override it */
+}
+
+/* --- FIX 3B: MAKE SETTINGS BUTTON LOOK LIKE AN APP BUTTON --- */
+#show_hide_settings {
+  background-color: var(--bg-card);
+  border-radius: 50px;
+  margin: 20px 0 10px 0;
+  width: 90%;
+  max-width: 350px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  transition: transform 0.1s ease;
+}
+#show_hide_settings:active {
+  transform: scale(0.96);
+}
+#show_hide_settings label {
+  color: var(--text-main);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 14px;
+  cursor: pointer;
+  display: block;
+  padding: 16px 32px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  border-radius: 50px;
+}
+#show_hide_settings input[type="checkbox"] {
+  display: none; /* Hides the native ugly checkbox */
 }
 
 hr {
@@ -94,8 +156,8 @@ hr {
   margin: 20px 0;
 }
 
-/* Checkbox Styles */
-input[type="checkbox"] {
+/* Checkboxes inside the settings menu */
+.settings_div input[type="checkbox"] {
   accent-color: var(--accent-neon);
   transform: scale(1.2);
   margin-right: 10px;
@@ -109,12 +171,12 @@ input[type="checkbox"] {
   height: 50px;
   gap: 6px;
   margin: 20px 0;
-  opacity: 0; /* Hidden by default */
+  opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .equalizer-container.playing {
-  opacity: 1; /* Fade in when playing */
+  opacity: 1;
 }
 
 .bar {
