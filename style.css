@@ -190,24 +190,31 @@ hr {
   margin: 20px 0;
 }
 
-/* The Equalizer Animation */
+/* The Equalizer Animation - Verbessert & Lücke gefixt */
 .equalizer-container {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 50px;
-  gap: 6px;
-  margin: 20px 0;
+  height: 0;         /* Schrumpft auf 0, wenn inaktiv */
+  margin: 0;         /* Nimmt keinen Platz weg */
+  overflow: hidden;  /* Versteckt den Inhalt beim Schrumpfen */
+  gap: 8px;          /* Etwas mehr Platz zwischen den Balken */
   opacity: 0;
-  transition: opacity 0.3s ease;
+  /* Weicher Übergang beim Aufklappen */
+  transition: height 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
 }
+
 .equalizer-container.playing {
+  height: 50px;      /* Volle Höhe beim Abspielen */
+  margin: 20px 0;    /* Schöner Abstand */
   opacity: 1;
 }
+
 .bar {
-  width: 10px;
-  background: linear-gradient(to top, var(--accent-neon), #ffb6c1);
-  border-radius: 5px 5px 0 0;
+  width: 12px;       /* Etwas dicker */
+  background: linear-gradient(to top, var(--accent-neon), #ff80bf);
+  border-radius: 6px; /* Schön abgerundet */
+  box-shadow: 0 0 12px var(--accent-neon); /* Cooler Neon-Leuchteffekt! */
   animation: bounce 0.8s infinite ease-in-out alternate;
   transform-origin: bottom;
 }
@@ -219,4 +226,24 @@ hr {
 @keyframes bounce {
   0% { transform: scaleY(0.3); }
   100% { transform: scaleY(1); }
+}
+
+/* Modernes Link-Styling für den GitHub-Link */
+a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: transparent;
+  transition: all 0.2s ease;
+  display: inline-block;
+  text-align: center;
+}
+
+a:hover, a:active {
+  color: var(--text-main);
+  background-color: var(--bg-card); /* Leichter Hintergrund beim Hovern */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
