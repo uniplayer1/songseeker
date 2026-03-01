@@ -30,20 +30,25 @@ h2 {
   text-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
 }
 
-/* --- FIX 1: CAMERA SCANNER CONSTRAINTS --- */
+/* --- THE CAMERA FIX: Perfect Square, No Stretching --- */
 #qr-reader {
   width: 90%;
   max-width: 350px;
+  aspect-ratio: 1 / 1; /* Forces a perfect square */
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   border: 2px solid var(--accent-neon);
   margin-bottom: 20px;
   background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 #qr-video {
   width: 100%;
-  display: block; /* Removes bottom spacing gap */
+  height: 100%;
+  object-fit: cover; /* Crops the video to fit the square beautifully */
 }
 
 /* Modern App Buttons */
@@ -64,23 +69,20 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-
 .button:active, .button_startscan:active, .button_startstop:active {
   transform: scale(0.96);
 }
-
 .button_startscan {
   background: linear-gradient(135deg, #ff007f, #7000ff);
   color: white;
 }
-
 .button_startstop {
   background-color: var(--accent-play);
 }
 
-/* --- FIX 2: HIDE DEBUG INFO BY DEFAULT --- */
+/* Hide Debug Info by Default */
 #videoid, #videotitle, #videoduration, #videostart {
-  display: none; /* Hidden until JS turns them on */
+  display: none;
   background-color: var(--bg-card);
   padding: 15px 20px;
   border-radius: 12px;
@@ -92,31 +94,16 @@ h2 {
   font-size: 14px;
   color: var(--text-muted);
 }
-
-.settings_div {
-  background-color: var(--bg-card);
-  padding: 15px 20px;
-  border-radius: 12px;
-  margin: 5px 0;
-  width: 90%;
-  max-width: 350px;
-  box-sizing: border-box;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
 #videotitle span, #video-duration {
   color: var(--text-main);
   font-weight: bold;
 }
 
-/* --- FIX 3A: LET JAVASCRIPT OPEN THE SETTINGS --- */
 .hidden {
-  display: none; /* Removed !important so JS can override it */
+  display: none;
 }
 
-/* --- FIX 3B: MAKE SETTINGS BUTTON LOOK LIKE AN APP BUTTON --- */
+/* Settings Toggle Button */
 #show_hide_settings {
   background-color: var(--bg-card);
   border-radius: 50px;
@@ -144,7 +131,54 @@ h2 {
   border-radius: 50px;
 }
 #show_hide_settings input[type="checkbox"] {
-  display: none; /* Hides the native ugly checkbox */
+  display: none;
+}
+
+/* --- THE SETTINGS UI FIX: Clean & Modern --- */
+.settings_div {
+  background-color: transparent;
+  width: 90%;
+  max-width: 350px;
+  margin: 5px 0;
+}
+.text-block {
+  background-color: var(--bg-card);
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  border-left: 4px solid var(--accent-neon);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.heading {
+  font-weight: 800;
+  color: var(--accent-neon);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.settings_div label {
+  color: var(--text-main);
+  font-size: 14px;
+  cursor: pointer;
+}
+.settings_div input[type="checkbox"] {
+  accent-color: var(--accent-neon);
+  transform: scale(1.3);
+  margin-right: 12px;
+  cursor: pointer;
+}
+.settings_div input[type="number"] {
+  background-color: var(--bg-dark);
+  border: 1px solid #444;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  width: 80px;
+  margin-top: 10px;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 14px;
 }
 
 hr {
@@ -156,14 +190,7 @@ hr {
   margin: 20px 0;
 }
 
-/* Checkboxes inside the settings menu */
-.settings_div input[type="checkbox"] {
-  accent-color: var(--accent-neon);
-  transform: scale(1.2);
-  margin-right: 10px;
-}
-
-/* --- THE EQUALIZER ANIMATION --- */
+/* The Equalizer Animation */
 .equalizer-container {
   display: flex;
   align-items: flex-end;
@@ -174,11 +201,9 @@ hr {
   opacity: 0;
   transition: opacity 0.3s ease;
 }
-
 .equalizer-container.playing {
   opacity: 1;
 }
-
 .bar {
   width: 10px;
   background: linear-gradient(to top, var(--accent-neon), #ffb6c1);
@@ -186,13 +211,11 @@ hr {
   animation: bounce 0.8s infinite ease-in-out alternate;
   transform-origin: bottom;
 }
-
 .bar:nth-child(1) { animation-delay: 0.1s; height: 30%; }
 .bar:nth-child(2) { animation-delay: 0.3s; height: 60%; }
 .bar:nth-child(3) { animation-delay: 0.0s; height: 100%; }
 .bar:nth-child(4) { animation-delay: 0.2s; height: 70%; }
 .bar:nth-child(5) { animation-delay: 0.4s; height: 40%; }
-
 @keyframes bounce {
   0% { transform: scaleY(0.3); }
   100% { transform: scaleY(1); }

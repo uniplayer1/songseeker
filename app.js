@@ -246,18 +246,25 @@ function playLocalAudio(url) {
 
     localPlayer.onloadedmetadata = function() {
         document.getElementById('video-duration').textContent = formatDuration(localPlayer.duration);
-        document.getElementById('startstop-video').style.background = "green"; // Ready state
+        document.getElementById('startstop-video').style.background = "var(--accent-play)"; 
         
-        if (isIOS()) {
-            // iOS requires explicit interaction
-        } else if (document.getElementById('autoplay').checked == true) {
+        // Let's force autoplay regardless of the device!
+        if (document.getElementById('autoplay').checked == true) {
             document.getElementById('startstop-video').innerHTML = "Stop";
-            document.getElementById('startstop-video').style.background = "red";
+            document.getElementById('startstop-video').style.background = "var(--accent-stop)";
             
             if (document.getElementById('randomplayback').checked == true) {
                 playLocalAtRandomStartTime();
             } else {
-                localPlayer.play();
+                localPlayer.play().then(() => {
+                    toggleAnimation(true);
+                }).catch(error => {
+                    // If the browser STILL blocks it, safely revert the button
+                    console.error("Autoplay was blocked by the browser:", error);
+                    document.getElementById('startstop-video').innerHTML = "Play";
+                    document.getElementById('startstop-video').style.background = "var(--accent-play)";
+                    toggleAnimation(false);
+                });
             }
         }
     };
