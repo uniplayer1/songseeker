@@ -9,3 +9,14 @@ services:
     volumes:
       - ./music:/usr/share/nginx/html/music
     restart: unless-stopped
+    depends_on:
+      - backend
+
+  backend:
+    image: node:18-alpine
+    container_name: songseeker_backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: node server.js
+    restart: unless-stopped

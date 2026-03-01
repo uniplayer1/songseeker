@@ -37,7 +37,49 @@ document.addEventListener('DOMContentLoaded', function () {
         highlightCodeOutline: true,
     }
     );
+    
+    // --- REPORT LOGIC ---
+    document.getElementById('reportButton').addEventListener('click', function() {
+        const currentTitle = document.getElementById('video-title').textContent;
+        document.getElementById('reportSongTitle').textContent = currentTitle ? currentTitle : "Unknown";
+        document.getElementById('reportModal').classList.remove('hidden');
+    });
+
+    document.getElementById('cancelReport').addEventListener('click', function() {
+        document.getElementById('reportModal').classList.add('hidden');
+    });
+
+    document.getElementById('submitReport').addEventListener('click', async function() {
+        const reason = document.getElementById('reportReason').value;
+        const songId = document.getElementById('video-id').textContent || lastDecodedText;
+        const title = document.getElementById('video-title').textContent;
+
+        try {
+            await fetch('/api/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ songId, title, reason, type: currentPlayerType })
+            });
+            
+            // Visual feedback
+            const btn = document.getElementById('reportButton');
+            btn.textContent = "Reported!";
+            btn.style.borderColor = "var(--accent-play)";
+            btn.style.color = "var(--accent-play)";
+            setTimeout(() => {
+                btn.textContent = "Report Song Issue";
+                btn.style.borderColor = "var(--accent-wait)";
+                btn.style.color = "var(--accent-wait)";
+            }, 3000);
+
+        } catch (error) {
+            console.error('Report failed:', error);
+            alert('Could not submit report. Check console.');
+        }
         
+        document.getElementById('reportModal').classList.add('hidden');
+    });
+    
     }
 );
 
@@ -95,6 +137,7 @@ async function handleScannedLink(decodedText) {
         document.getElementById('qr-reader').style.display = 'none'; // Hide the scanner after successful scan
         document.getElementById('cancelScanButton').style.display = 'none'; // Hide the cancel-button
         document.getElementById('startScanButton').style.display = 'block';
+        document.getElementById('reportButton').style.display = 'block';
         lastDecodedText = ""; // Reset the last decoded text
 
         document.getElementById('video-id').textContent = youtubeLinkData.videoId;  
@@ -234,6 +277,7 @@ function playLocalAudio(url) {
     document.getElementById('qr-reader').style.display = 'none'; 
     document.getElementById('cancelScanButton').style.display = 'none';
     document.getElementById('startScanButton').style.display = 'block';
+    document.getElementById('reportButton').style.display = 'block';
     lastDecodedText = ""; 
     currentPlayerType = 'local'; // Switch context to local player
 

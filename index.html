@@ -38,6 +38,8 @@
     <button id="cancelScanButton" class="button" style="display:none; background-color: var(--accent-stop);">Cancel Scan</button>
     <button id="startScanButton" class="button_startscan">Start Scan</button>
     
+    <button id="reportButton" class="button_report" style="display:none;">Report Song Issue</button>
+
     <br />
     <button id="startstop-video" class="button_startstop">Play</button>
 
@@ -102,6 +104,26 @@
     </div>
 
     <div id="player"></div> <audio id="local-player" style="display:none;"></audio><!-- Load YouTube Player -->
+
+    <div id="reportModal" class="modal hidden">
+      <div class="modal-content text-block">
+        <div class="heading">Report a Problem</div>
+        <p style="font-size: 14px; color: var(--text-muted);">Song: <span id="reportSongTitle" style="color: var(--text-main); font-weight: bold;"></span></p>
+        
+        <label for="reportReason" style="font-size: 14px; margin-top: 10px; display: block;">What is wrong?</label>
+        <select id="reportReason" class="modern-select">
+          <option value="broken_link">Song doesn't play / Broken Link</option>
+          <option value="wrong_song">Wrong Song / Video</option>
+          <option value="bad_quality">Bad Audio Quality</option>
+          <option value="other">Other</option>
+        </select>
+        
+        <div class="modal-actions">
+          <button id="submitReport" class="button_startscan">Submit Report</button>
+          <button id="cancelReport" class="button">Cancel</button>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="app.js?version=20250830"></script>
 
