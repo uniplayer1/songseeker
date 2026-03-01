@@ -232,12 +232,12 @@ hr {
 
 /* --- DER NEUE, DYNAMISCHE EQUALIZER --- */
 .bar {
-  width: 14px; /* Noch ein kleines bisschen fetter */
+  width: 14px; 
+  height: 100%; /* <-- Diese Zeile hat gefehlt! */
   background: linear-gradient(to top, var(--accent-neon), #7000ff);
   border-radius: 6px;
   box-shadow: 0 0 12px var(--accent-neon);
   transform-origin: bottom;
-  /* Die Standard-Animation heißt jetzt soundWave */
   animation: soundWave infinite ease-in-out alternate;
 }
 
