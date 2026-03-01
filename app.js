@@ -203,8 +203,7 @@ async function handleScannedLink(decodedText) {
             const videoId = match[2];
             let startTime = queryParams.get('start') || queryParams.get('t');
             const endTime = queryParams.get('end');
-    
-            document.getElementById('video-start').textContent = startTime;
+
             // Normalize and parse 't' and 'start' parameters
             startTime = normalizeTimeParameter(startTime);
             const parsedEndTime = normalizeTimeParameter(endTime);
@@ -241,10 +240,33 @@ function playLocalAudio(url) {
     const localPlayer = document.getElementById('local-player');
     localPlayer.src = url;
     
-    // Update UI elements
+    const fallbackTitle = url.substring(url.lastIndexOf('/') + 1);
+    
+    // UI vorab aktualisieren
     document.getElementById('video-id').textContent = "Local File";
-    document.getElementById('video-title').textContent = url.substring(url.lastIndexOf('/') + 1);
-    document.getElementById('startstop-video').style.background = "orange"; // Buffering state
+    document.getElementById('video-title').textContent = "Lade... (" + fallbackTitle + ")";
+    document.getElementById('video-year').textContent = "Lade...";
+
+    // MP3 Metadaten (ID3-Tags) auslesen
+    if (window.jsmediatags) {
+        window.jsmediatags.read(url, {
+            onSuccess: function(tag) {
+                const tags = tag.tags;
+                // Wenn im MP3-Tag ein Titel steht, nimm den. Sonst Fallback auf Dateinamen.
+                document.getElementById('video-title').textContent = tags.title ? tags.title : fallbackTitle;
+                // Wenn ein Jahr im Tag steht, nimm das. Sonst "Unbekannt".
+                document.getElementById('video-year').textContent = tags.year ? tags.year : "Unbekannt";
+            },
+            onError: function(error) {
+                console.warn('Keine Metadaten gefunden, nutze Dateinamen.', error);
+                document.getElementById('video-title').textContent = fallbackTitle;
+                document.getElementById('video-year').textContent = "Unbekannt";
+            }
+        });
+    } else {
+        document.getElementById('video-title').textContent = fallbackTitle;
+        document.getElementById('video-year').textContent = "Unbekannt";
+    }
 
     localPlayer.onloadedmetadata = function() {
         document.getElementById('video-duration').textContent = formatDuration(localPlayer.duration);
@@ -363,6 +385,7 @@ function onPlayerStateChange(event) {
         document.getElementById('video-title').textContent = videoData.title;
         var duration = player.getDuration();
         document.getElementById('video-duration').textContent = formatDuration(duration);
+        document.getElementById('video-year').textContent = "Unbekannt (YouTube API)";
         // We do need this on iOS devices otherwise one would need to press play twice
         if (isIOS()) {
             player.playVideo();
@@ -393,7 +416,7 @@ function onPlayerStateChange(event) {
 // Helper function to format duration from seconds to a more readable format
 function formatDuration(duration) {
     var minutes = Math.floor(duration / 60);
-    var seconds = duration % 60;
+    var seconds = Math.floor(duration % 60); // <-- Hier ist das Math.floor() neu!
     return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
 }
 
@@ -522,17 +545,17 @@ document.getElementById('songinfo').addEventListener('click', function() {
     var videoid = document.getElementById('videoid');
     var videotitle = document.getElementById('videotitle');
     var videoduration = document.getElementById('videoduration');
-    var videostart = document.getElementById('videostart');
+    var videoyear = document.getElementById('videoyear'); // Jetzt das Jahr
     if(cb.checked == true){
         videoid.style.display = 'block';
         videotitle.style.display = 'block';
         videoduration.style.display = 'block';
-        videostart.style.display = 'block';
+        videoyear.style.display = 'block';
     } else {
         videoid.style.display = 'none';
         videotitle.style.display = 'none';
         videoduration.style.display = 'none';
-        videostart.style.display = 'none';
+        videoyear.style.display = 'none';
     }
 });
 
