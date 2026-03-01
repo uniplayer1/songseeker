@@ -13,7 +13,7 @@ By hosting your own music files via a Docker container, you can completely avoid
 ### 1. Clone the Repository
 Clone this repository to your server:
 ```bash
-git clone [https://github.com/YOUR_USERNAME/songseeker-local.git](https://github.com/YOUR_USERNAME/songseeker-local.git)
+git clone [https://github.com/uniplayer1/songseeker.git](https://github.com/uniplayer1/songseeker.git)
 cd songseeker-local
 ```
 
