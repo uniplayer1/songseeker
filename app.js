@@ -304,16 +304,26 @@ function playLocalAtRandomStartTime() {
     }
 
     localPlayer.currentTime = startTime;
-    localPlayer.play();
-    toggleAnimation(true);
+    // NEU: play() mit Fehlerbehandlung (Catch-Block)
+    localPlayer.play().then(() => {
+        // Erst wenn es WIRKLICH spielt, Animation starten
+        toggleAnimation(true);
 
-    clearTimeout(playbackTimer); 
-    playbackTimer = setTimeout(() => {
-        localPlayer.pause();
+        clearTimeout(playbackTimer); 
+        playbackTimer = setTimeout(() => {
+            localPlayer.pause();
+            document.getElementById('startstop-video').innerHTML = "Play";
+            document.getElementById('startstop-video').style.background = "var(--accent-play)"; // Direkt deine CSS-Variable genutzt
+            toggleAnimation(false);
+        }, (endTime - startTime) * 1000); 
+
+    }).catch(error => {
+        // Falls der Browser es doch blockiert: UI sauber zurücksetzen!
+        console.error("Autoplay wurde vom Browser blockiert:", error);
         document.getElementById('startstop-video').innerHTML = "Play";
-        document.getElementById('startstop-video').style.background = "green";
+        document.getElementById('startstop-video').style.background = "var(--accent-play)";
         toggleAnimation(false);
-    }, (endTime - startTime) * 1000); 
+    });
 }
 // --- END NEW LOCAL AUDIO LOGIC ---
 
