@@ -467,7 +467,6 @@ function playVideoAtRandomStartTime() {
 document.getElementById('qr-reader').style.display = 'none'; // Initially hide the QR Scanner
 
 document.getElementById('startScanButton').addEventListener('click', function() {
-    // Problem 2: Wiedergabe sofort stoppen
     const localPlayer = document.getElementById('local-player');
     
     // Audio-Element für mobiles Autoplay entsperren (Problem 3 Fix)
@@ -479,7 +478,11 @@ document.getElementById('startScanButton').addEventListener('click', function() 
         player.pauseVideo();
     }
 
-    // Problem 4: Start-Button verstecken
+    // NEU: UI zurücksetzen (Button auf Play stellen und Equalizer stoppen)
+    document.getElementById('startstop-video').innerHTML = "Play";
+    document.getElementById('startstop-video').style.background = "var(--accent-play)";
+    toggleAnimation(false);
+
     this.style.display = 'none';
 
     document.getElementById('cancelScanButton').style.display = 'block';
