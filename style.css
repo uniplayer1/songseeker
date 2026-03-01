@@ -101,7 +101,7 @@ h2 {
 }
 
 /* Hide Debug Info by Default */
-#videoid, #videotitle, #videoduration, #videostart {
+#videoid, #videotitle, #videoduration, #videoyear {
   display: none;
   background-color: var(--bg-card);
   padding: 15px 20px;
