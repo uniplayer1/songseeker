@@ -39,26 +39,32 @@ document.addEventListener('DOMContentLoaded', function () {
     );
     
     // --- REPORT LOGIC ---
-    document.getElementById('reportButton').addEventListener('click', function() {
-        const currentTitle = document.getElementById('video-title').textContent;
-        document.getElementById('reportSongTitle').textContent = currentTitle ? currentTitle : "Unknown";
-        document.getElementById('reportModal').classList.remove('hidden');
-    });
-
-    document.getElementById('cancelReport').addEventListener('click', function() {
-        document.getElementById('reportModal').classList.add('hidden');
-    });
-
     document.getElementById('submitReport').addEventListener('click', async function() {
         const reason = document.getElementById('reportReason').value;
-        const songId = document.getElementById('video-id').textContent || lastDecodedText;
         const title = document.getElementById('video-title').textContent;
+        const videoIdText = document.getElementById('video-id').textContent;
+        
+        // Figure out the actual playable URL based on the player type
+        let resolvedUrl = "";
+        if (currentPlayerType === 'local') {
+            // For local files, grab the source from the audio element
+            resolvedUrl = document.getElementById('local-player').src || lastDecodedText;
+        } else {
+            // For YouTube, reconstruct the full YouTube link
+            resolvedUrl = videoIdText ? `https://www.youtube.com/watch?v=${videoIdText}` : lastDecodedText;
+        }
 
         try {
             await fetch('/api/report', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ songId, title, reason, type: currentPlayerType })
+                body: JSON.stringify({ 
+                    type: currentPlayerType,
+                    title: title, 
+                    reason: reason,
+                    resolvedUrl: resolvedUrl,      // The actual MP3 path or YouTube link
+                    originalScan: lastDecodedText  // What the QR code actually contained
+                })
             });
             
             // Visual feedback

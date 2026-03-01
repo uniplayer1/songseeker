@@ -1,4 +1,3 @@
-// backend/server.js
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -6,7 +5,6 @@ const path = require('path');
 const logFile = path.join(__dirname, 'reports.log');
 
 const server = http.createServer((req, res) => {
-    // Only accept POST requests on /report
     if (req.method === 'POST' && req.url === '/report') {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
@@ -14,9 +12,14 @@ const server = http.createServer((req, res) => {
             try {
                 const data = JSON.parse(body);
                 const timestamp = new Date().toISOString();
-                const logEntry = `[${timestamp}] TYPE: ${data.type} | ID/URL: ${data.songId} | TITLE: ${data.title} | REASON: ${data.reason}\n`;
                 
-                // Append to our log file
+                // Formatted log entry with all the new info
+                const logEntry = `[${timestamp}] [${data.type.toUpperCase()}] REASON: ${data.reason}
+   -> TITLE:   ${data.title}
+   -> PLAYING: ${data.resolvedUrl}
+   -> SCANNED: ${data.originalScan}
+--------------------------------------------------\n`;
+                
                 fs.appendFileSync(logFile, logEntry);
                 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
