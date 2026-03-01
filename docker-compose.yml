@@ -1,0 +1,11 @@
+services:
+  songseeker:
+    build:
+      context: .
+      dockerfile: imagebuild/Dockerfile
+    container_name: songseeker
+    ports:
+      - "8887:80" 
+    volumes:
+      - ./music:/usr/share/nginx/html/music
+    restart: unless-stopped
