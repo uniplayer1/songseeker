@@ -502,9 +502,13 @@ document.getElementById('qr-reader').style.display = 'none'; // Initially hide t
 document.getElementById('startScanButton').addEventListener('click', function() {
     const localPlayer = document.getElementById('local-player');
     
+    // NEU 1: Wir löschen das Event, damit der Dummy-Sound nicht das Autoplay auslöst!
+    localPlayer.onloadedmetadata = null;
+    
+    // NEU 2: Falls der Random-Timer noch läuft, stoppen wir ihn
+    clearTimeout(playbackTimer);
+
     // --- DER KUGELSICHERE AUDIO-UNLOCK TRICK ---
-    // Wir laden 0.1 Sekunden Stille (Base64) und spielen sie beim Klick ab.
-    // So gilt das Audio-Element für das Handy als "vom Nutzer entsperrt"!
     localPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
     localPlayer.play().then(() => {
         localPlayer.pause();
@@ -515,18 +519,18 @@ document.getElementById('startScanButton').addEventListener('click', function() 
         player.pauseVideo();
     }
 
-    // NEU: UI zurücksetzen (Button auf Play stellen und Equalizer stoppen)
+    // UI zuverlässig zurücksetzen (Equalizer stoppen und auf Play stellen)
     document.getElementById('startstop-video').innerHTML = "Play";
     document.getElementById('startstop-video').style.background = "var(--accent-play)";
     toggleAnimation(false);
 
+    // Buttons austauschen und Scanner anzeigen
     this.style.display = 'none';
-
     document.getElementById('cancelScanButton').style.display = 'block';
-    document.getElementById('qr-reader').style.display = 'block'; // Show the scanner
+    document.getElementById('qr-reader').style.display = 'block'; 
+    
     qrScanner.start().catch(err => {
         console.error('Unable to start QR Scanner', err);
-        // Falls was schief geht, Start-Button wieder anzeigen
         document.getElementById('startScanButton').style.display = 'block';
     });
 
