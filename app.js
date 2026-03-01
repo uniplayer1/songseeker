@@ -35,10 +35,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }, { 
         highlightScanRegion: true,
         highlightCodeOutline: true,
-    }
-    );
+    });
     
     // --- REPORT LOGIC ---
+    document.getElementById('reportButton').addEventListener('click', function() {
+        const currentTitle = document.getElementById('video-title').textContent;
+        document.getElementById('reportSongTitle').textContent = currentTitle ? currentTitle : "Unknown";
+        document.getElementById('reportModal').classList.remove('hidden');
+    });
+
+    document.getElementById('cancelReport').addEventListener('click', function() {
+        document.getElementById('reportModal').classList.add('hidden');
+    });
+
     document.getElementById('submitReport').addEventListener('click', async function() {
         const reason = document.getElementById('reportReason').value;
         const title = document.getElementById('video-title').textContent;
@@ -47,10 +56,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Figure out the actual playable URL based on the player type
         let resolvedUrl = "";
         if (currentPlayerType === 'local') {
-            // For local files, grab the source from the audio element
             resolvedUrl = document.getElementById('local-player').src || lastDecodedText;
         } else {
-            // For YouTube, reconstruct the full YouTube link
             resolvedUrl = videoIdText ? `https://www.youtube.com/watch?v=${videoIdText}` : lastDecodedText;
         }
 
@@ -62,8 +69,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     type: currentPlayerType,
                     title: title, 
                     reason: reason,
-                    resolvedUrl: resolvedUrl,      // The actual MP3 path or YouTube link
-                    originalScan: lastDecodedText  // What the QR code actually contained
+                    resolvedUrl: resolvedUrl,      
+                    originalScan: lastDecodedText  
                 })
             });
             
@@ -85,9 +92,8 @@ document.addEventListener('DOMContentLoaded', function () {
         
         document.getElementById('reportModal').classList.add('hidden');
     });
-    
-    }
-);
+
+});
 
 // Function to determine the type of link and act accordingly
 async function handleScannedLink(decodedText) {
