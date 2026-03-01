@@ -30,12 +30,13 @@
   <body>
     <h2>SongSeeker</h2>
 
-    <div id="qr-reader">
-      <button id="cancelScanButton" class="button">Cancel Scan</button>
+    <div id="qr-reader" style="display:none;">
       <video id="qr-video"></video>
     </div>
 
+    <button id="cancelScanButton" class="button" style="display:none; background-color: var(--accent-stop);">Cancel Scan</button>
     <button id="startScanButton" class="button_startscan">Start Scan</button>
+    
     <br />
     <button id="startstop-video" class="button_startstop">Play</button>
 
