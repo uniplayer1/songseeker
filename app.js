@@ -1,43 +1,51 @@
 import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
 
-let player; 
-let playbackTimer; 
-let playbackDuration = 30; 
+let player; // Define player globally
+let playbackTimer; // hold the timer reference
+let playbackDuration = 30; // Default playback duration
 let qrScanner;
 let csvCache = {};
-let lastDecodedText = ""; 
+let lastDecodedText = ""; // Store the last decoded text
 let currentStartTime = 0;
-let currentPlayerType = 'youtube'; 
+let currentPlayerType = 'youtube'; // Track which player is active
 
+// Function to detect iOS devices
 function isIOS() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    const video = document.getElementById('qr-video');
 
+    const video = document.getElementById('qr-video');
+    const resultContainer = document.getElementById("qr-reader-results");
+
+    // If the user is on an iOS device, uncheck and disable the autoplay checkbox
     if (isIOS()) {
         var autoplayCheckbox = document.getElementById('autoplay');
         autoplayCheckbox.checked = false;
-        // We will no longer disable the checkbox, giving users the option to try!
+        // We removed autoplayCheckbox.disabled = true; so iOS users can still try to force it!
     }
 
     qrScanner = new QrScanner(video, result => {
         console.log('decoded qr code:', result);
         if (result.data !== lastDecodedText) {
-            lastDecodedText = result.data; 
+            lastDecodedText = result.data; // Update the last decoded text
             handleScannedLink(result.data);
         }
     }, { 
         highlightScanRegion: true,
         highlightCodeOutline: true,
-    });
-});
+    }
+    );
+        
+    }
+);
 
+// Function to determine the type of link and act accordingly
 async function handleScannedLink(decodedText) {
     if (decodedText.toLowerCase().endsWith('.mp3') || decodedText.toLowerCase().endsWith('.wav')) {
         playLocalAudio(decodedText);
-        return; 
+        return; // Exit the function early so YouTube logic doesn't run
     }
 
     let youtubeURL = "";
@@ -47,6 +55,7 @@ async function handleScannedLink(decodedText) {
     } else if (isHitsterLink(decodedText)) {
         const hitsterData = parseHitsterUrl(decodedText);
         if (hitsterData) {
+            console.log("Hitster data:", hitsterData.id, hitsterData.lang);
             try {
                 const csvContent = await getCachedCsv(`/playlists/hitster-${hitsterData.lang}.csv`);
                 const youtubeLink = lookupYoutubeLink(hitsterData.id, csvContent);
@@ -57,33 +66,43 @@ async function handleScannedLink(decodedText) {
               console.error("Failed to fetch CSV:", error);
             }
         }
+        else {
+            console.log("Invalid Hitster URL:", decodedText);
+        }
     } else if (isRockster(decodedText)){
         try {
             const urlObj = new URL(decodedText); 
             const ytCode = urlObj.searchParams.get("yt"); 
+    
             if (ytCode) {
                 youtubeURL = `https://www.youtube.com/watch?v=${ytCode}`;
+            } else {
+                console.error("Rockster link is missing the 'yt' parameter:", decodedText);
             }
-        } catch (error) {}
+        } catch (error) {
+            console.error("Invalid Rockster URL:", decodedText);
+        }
     }
+
+    console.log(`YouTube Video URL: ${youtubeURL}`);
 
     const youtubeLinkData = parseYoutubeLink(youtubeURL);
     if (youtubeLinkData) {
         qrScanner.stop(); 
         document.getElementById('qr-reader').style.display = 'none'; 
         document.getElementById('cancelScanButton').style.display = 'none'; 
-        document.getElementById('startScanButton').style.display = 'block'; // Show Start button again
+        document.getElementById('startScanButton').style.display = 'block'; // FIX: Bring start button back
         lastDecodedText = ""; 
 
-        document.getElementById('video-id').textContent = youtubeLinkData.videoId;  
-        currentStartTime = youtubeLinkData.startTime || 0;
-        
-        // Pause any local audio that might be playing!
+        // FIX: Stop local audio if a YouTube video is scanned
         const localPlayer = document.getElementById('local-player');
         localPlayer.pause();
         clearTimeout(playbackTimer);
         toggleAnimation(false);
 
+        document.getElementById('video-id').textContent = youtubeLinkData.videoId;  
+        console.log(youtubeLinkData.videoId);
+        currentStartTime = youtubeLinkData.startTime || 0;
         player.cueVideoById(youtubeLinkData.videoId, currentStartTime);   
     }
 }
@@ -120,13 +139,17 @@ function lookupYoutubeLink(id, csvContent) {
     const headers = csvContent; 
     const cardIndex = headers.indexOf('Card#');
     const urlIndex = headers.indexOf('URL');
+
     const targetId = parseInt(id, 10); 
     const lines = csvContent.slice(1); 
 
-    if (cardIndex === -1 || urlIndex === -1) return null;
+    if (cardIndex === -1 || urlIndex === -1) {
+        throw new Error('Card# or URL column not found');
+    }
 
     for (let row of lines) {
-        if (parseInt(row[cardIndex], 10) === targetId) {
+        const csvId = parseInt(row[cardIndex], 10);
+        if (csvId === targetId) {
             return row[urlIndex].trim(); 
         }
     }
@@ -154,6 +177,7 @@ function parseCSV(text) {
 
 async function getCachedCsv(url) {
     if (!csvCache[url]) { 
+        console.log(`URL not cached, fetching CSV from URL: ${url}`);
         const response = await fetch(url);
         const data = await response.text();
         csvCache[url] = parseCSV(data); 
@@ -191,23 +215,21 @@ function normalizeTimeParameter(timeValue) {
     return isNaN(seconds) ? null : seconds;
 }
 
-// --- NEW LOCAL AUDIO LOGIC ---
+// --- LOCAL AUDIO LOGIC ---
 function playLocalAudio(url) {
     qrScanner.stop(); 
     document.getElementById('qr-reader').style.display = 'none'; 
     document.getElementById('cancelScanButton').style.display = 'none'; 
-    document.getElementById('startScanButton').style.display = 'block'; // Show Start button again
+    document.getElementById('startScanButton').style.display = 'block'; // FIX: Bring start button back
     lastDecodedText = ""; 
     currentPlayerType = 'local'; 
 
     const localPlayer = document.getElementById('local-player');
     
-    // FIX: Pause any currently playing audio and clear timers before loading a new one
+    // FIX: Stop previous playback before loading new song
     localPlayer.pause();
     clearTimeout(playbackTimer);
     toggleAnimation(false);
-
-    // Pause YouTube player if active
     if (player && typeof player.pauseVideo === 'function') {
         player.pauseVideo();
     }
@@ -232,7 +254,7 @@ function playLocalAudio(url) {
                 localPlayer.play().then(() => {
                     toggleAnimation(true);
                 }).catch(error => {
-                    console.error("Autoplay blocked. User tap required:", error);
+                    console.error("Autoplay blocked:", error);
                     document.getElementById('startstop-video').innerHTML = "Play";
                     document.getElementById('startstop-video').style.background = "var(--accent-play)";
                     toggleAnimation(false);
@@ -268,29 +290,24 @@ function playLocalAtRandomStartTime() {
 
     if (startTime <= minStartTime) {
         const range = maxEndTime - minStartTime - playbackDuration;
-        startTime = minStartTime + (Math.random() * range);
+        const randomOffset = Math.random() * range;
+        startTime = minStartTime + randomOffset;
         endTime = startTime + playbackDuration;
     }
 
     localPlayer.currentTime = startTime;
-    localPlayer.play().then(() => {
-        toggleAnimation(true);
-    }).catch(e => {
-        document.getElementById('startstop-video').innerHTML = "Play";
-        document.getElementById('startstop-video').style.background = "var(--accent-play)";
-        toggleAnimation(false);
-    });
+    localPlayer.play().then(() => toggleAnimation(true)).catch(e => console.error(e));
 
     clearTimeout(playbackTimer); 
     playbackTimer = setTimeout(() => {
         localPlayer.pause();
         document.getElementById('startstop-video').innerHTML = "Play";
-        // FIX: Removed the buggy 'green' color
-        document.getElementById('startstop-video').style.background = "var(--accent-play)"; 
+        document.getElementById('startstop-video').style.background = "var(--accent-play)";
         toggleAnimation(false);
     }, (endTime - startTime) * 1000); 
 }
 
+// --- YOUTUBE LOGIC ---
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
         height: '0',
@@ -321,7 +338,9 @@ function onPlayerStateChange(event) {
         var duration = player.getDuration();
         document.getElementById('video-duration').textContent = formatDuration(duration);
         
-        if (document.getElementById('autoplay').checked == true) {
+        if (isIOS()) {
+            player.playVideo();
+        } else if (document.getElementById('autoplay').checked == true) {
             document.getElementById('startstop-video').innerHTML = "Stop";
             if (document.getElementById('randomplayback').checked == true) {
                 playVideoAtRandomStartTime();
@@ -329,19 +348,22 @@ function onPlayerStateChange(event) {
                 player.playVideo();
             }
         }
-    } else if (event.data == YT.PlayerState.PLAYING) {
+    }
+    else if (event.data == YT.PlayerState.PLAYING) {
         document.getElementById('startstop-video').style.background = "var(--accent-stop)";
-    } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+    }
+    else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
         document.getElementById('startstop-video').innerHTML = "Play";
         document.getElementById('startstop-video').style.background = "var(--accent-play)";
-    } else if (event.data == YT.PlayerState.BUFFERING) {
+    }
+    else if (event.data == YT.PlayerState.BUFFERING) {
         document.getElementById('startstop-video').style.background = "var(--accent-wait)";
     }
 }
 
 function formatDuration(duration) {
     var minutes = Math.floor(duration / 60);
-    var seconds = Math.floor(duration % 60);
+    var seconds = duration % 60;
     return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
 }
 
@@ -350,8 +372,8 @@ document.getElementById('startstop-video').addEventListener('click', function() 
 
     if (this.innerHTML == "Play") {
         this.innerHTML = "Stop";
-        this.style.background = "var(--accent-stop)"; 
-        toggleAnimation(true); 
+        this.style.background = "var(--accent-stop)";
+        toggleAnimation(true);
 
         if (document.getElementById('randomplayback').checked == true) {
             if (currentPlayerType === 'local') {
@@ -368,8 +390,8 @@ document.getElementById('startstop-video').addEventListener('click', function() 
         }
     } else {
         this.innerHTML = "Play";
-        this.style.background = "var(--accent-play)"; 
-        toggleAnimation(false); 
+        this.style.background = "var(--accent-play)";
+        toggleAnimation(false);
 
         if (currentPlayerType === 'local') {
             localPlayer.pause();
@@ -399,7 +421,8 @@ function playVideoAtRandomStartTime() {
 
     if (startTime <= minStartTime) {
         const range = maxEndTime - minStartTime - playbackDuration;
-        startTime = minStartTime + (Math.random() * range);
+        const randomOffset = Math.random() * range;
+        startTime = minStartTime + randomOffset;
         endTime = startTime + playbackDuration;
     }
 
@@ -414,19 +437,27 @@ function playVideoAtRandomStartTime() {
     }, (endTime - startTime) * 1000); 
 }
 
+// --- SCANNER BUTTON LOGIC ---
+document.getElementById('qr-reader').style.display = 'none'; 
+
 document.getElementById('startScanButton').addEventListener('click', function() {
-    // FIX: Hide Start button, Show Cancel button
-    this.style.display = 'none';
+    // FIX: Silent Audio Hack to bypass Autoplay blocks
+    const localPlayer = document.getElementById('local-player');
+    if (!localPlayer.src || localPlayer.src === window.location.href) {
+        localPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        localPlayer.play().then(() => localPlayer.pause()).catch(e => console.log("Unlock pending"));
+    }
+
+    // FIX: Hide Start, Show Cancel, Show Camera as Flex
+    this.style.display = 'none'; 
     document.getElementById('cancelScanButton').style.display = 'block';
-    
-    // We use display: flex instead of block so the square aspect ratio stays intact
     document.getElementById('qr-reader').style.display = 'flex'; 
 
     qrScanner.start().catch(err => {
         console.error('Unable to start QR Scanner', err);
-        // If it fails, revert the buttons
+        // Revert buttons if camera fails
         document.getElementById('cancelScanButton').style.display = 'none';
-        this.style.display = 'block';
+        document.getElementById('startScanButton').style.display = 'block';
         document.getElementById('qr-reader').style.display = 'none';
     });
 
@@ -440,6 +471,29 @@ document.getElementById('cancelScanButton').addEventListener('click', function()
     document.getElementById('qr-reader').style.display = 'none'; 
     this.style.display = 'none'; // Hide cancel
     document.getElementById('startScanButton').style.display = 'block'; // Show start
+});
+
+document.getElementById('debugButton').addEventListener('click', function() {
+    handleScannedLink("https://www.hitstergame.com/de-aaaa0012/237");
+});
+
+document.getElementById('songinfo').addEventListener('click', function() {
+    var cb = document.getElementById('songinfo');
+    var videoid = document.getElementById('videoid');
+    var videotitle = document.getElementById('videotitle');
+    var videoduration = document.getElementById('videoduration');
+    var videostart = document.getElementById('videostart');
+    if(cb.checked == true){
+        videoid.style.display = 'block';
+        videotitle.style.display = 'block';
+        videoduration.style.display = 'block';
+        videostart.style.display = 'block';
+    } else {
+        videoid.style.display = 'none';
+        videotitle.style.display = 'none';
+        videoduration.style.display = 'none';
+        videostart.style.display = 'none';
+    }
 });
 
 document.getElementById('cb_settings').addEventListener('click', function() {
@@ -506,28 +560,5 @@ function toggleAnimation(isPlaying) {
         }
     }
 }
-
-document.getElementById('debugButton').addEventListener('click', function() {
-    handleScannedLink("https://www.hitstergame.com/de-aaaa0012/237");
-});
-
-document.getElementById('songinfo').addEventListener('click', function() {
-    var cb = document.getElementById('songinfo');
-    var videoid = document.getElementById('videoid');
-    var videotitle = document.getElementById('videotitle');
-    var videoduration = document.getElementById('videoduration');
-    var videostart = document.getElementById('videostart');
-    if(cb.checked == true){
-        videoid.style.display = 'block';
-        videotitle.style.display = 'block';
-        videoduration.style.display = 'block';
-        videostart.style.display = 'block';
-    } else {
-        videoid.style.display = 'none';
-        videotitle.style.display = 'none';
-        videoduration.style.display = 'none';
-        videostart.style.display = 'none';
-    }
-});
 
 window.addEventListener("DOMContentLoaded", getCookies());
