@@ -94,6 +94,7 @@ async function handleScannedLink(decodedText) {
         qrScanner.stop(); // Stop scanning after a result is found
         document.getElementById('qr-reader').style.display = 'none'; // Hide the scanner after successful scan
         document.getElementById('cancelScanButton').style.display = 'none'; // Hide the cancel-button
+        document.getElementById('startScanButton').style.display = 'block';
         lastDecodedText = ""; // Reset the last decoded text
 
         document.getElementById('video-id').textContent = youtubeLinkData.videoId;  
@@ -232,7 +233,8 @@ async function handleScannedLink(decodedText) {
 function playLocalAudio(url) {
     qrScanner.stop(); 
     document.getElementById('qr-reader').style.display = 'none'; 
-    document.getElementById('cancelScanButton').style.display = 'none'; 
+    document.getElementById('cancelScanButton').style.display = 'none';
+    document.getElementById('startScanButton').style.display = 'block';
     lastDecodedText = ""; 
     currentPlayerType = 'local'; // Switch context to local player
 
@@ -465,15 +467,31 @@ function playVideoAtRandomStartTime() {
 document.getElementById('qr-reader').style.display = 'none'; // Initially hide the QR Scanner
 
 document.getElementById('startScanButton').addEventListener('click', function() {
+    // Problem 2: Wiedergabe sofort stoppen
+    const localPlayer = document.getElementById('local-player');
+    
+    // Audio-Element für mobiles Autoplay entsperren (Problem 3 Fix)
+    localPlayer.play().then(() => {
+        localPlayer.pause();
+    }).catch(() => {}); // Fehler ignorieren, falls es nicht klappt
+    
+    if (typeof player !== 'undefined' && player && player.pauseVideo) {
+        player.pauseVideo();
+    }
+
+    // Problem 4: Start-Button verstecken
+    this.style.display = 'none';
+
     document.getElementById('cancelScanButton').style.display = 'block';
     document.getElementById('qr-reader').style.display = 'block'; // Show the scanner
     qrScanner.start().catch(err => {
         console.error('Unable to start QR Scanner', err);
-        qrResult.textContent = "QR Scanner failed to start.";
+        // Falls was schief geht, Start-Button wieder anzeigen
+        document.getElementById('startScanButton').style.display = 'block';
     });
 
     qrScanner.start().then(() => {
-        qrScanner.setInversionMode('both'); // we want to scan also for Hitster QR codes which use inverted colors
+        qrScanner.setInversionMode('both'); 
     });
 });
 
@@ -505,6 +523,7 @@ document.getElementById('cancelScanButton').addEventListener('click', function()
     qrScanner.stop(); // Stop scanning after a result is found
     document.getElementById('qr-reader').style.display = 'none'; // Hide the scanner after successful scan
     document.getElementById('cancelScanButton').style.display = 'none'; // Hide the cancel-button
+    document.getElementById('startScanButton').style.display = 'block';
 });
 
 document.getElementById('cb_settings').addEventListener('click', function() {
