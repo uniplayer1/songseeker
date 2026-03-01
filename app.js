@@ -469,10 +469,14 @@ document.getElementById('qr-reader').style.display = 'none'; // Initially hide t
 document.getElementById('startScanButton').addEventListener('click', function() {
     const localPlayer = document.getElementById('local-player');
     
-    // Audio-Element für mobiles Autoplay entsperren (Problem 3 Fix)
+    // --- DER KUGELSICHERE AUDIO-UNLOCK TRICK ---
+    // Wir laden 0.1 Sekunden Stille (Base64) und spielen sie beim Klick ab.
+    // So gilt das Audio-Element für das Handy als "vom Nutzer entsperrt"!
+    localPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
     localPlayer.play().then(() => {
         localPlayer.pause();
-    }).catch(() => {}); // Fehler ignorieren, falls es nicht klappt
+    }).catch(() => {});
+    // -------------------------------------------
     
     if (typeof player !== 'undefined' && player && player.pauseVideo) {
         player.pauseVideo();
