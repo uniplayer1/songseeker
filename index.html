@@ -7,12 +7,8 @@
       import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <meta name=viewport content="width=device-width, initial-scale=1">
-
-    <!-- Allow web app to be run in full-screen mode -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- Font Awesome for consistent scalable icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- iOS icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="icon-180x180.png">
@@ -33,19 +29,15 @@
 
     <!-- compact toolbar with icons for common actions -->
     <div id="toolbar" class="toolbar">
-      <button id="settingsIcon" class="icon-button" title="Settings">⚙️</button>
-      <button id="autoplayIcon" class="icon-button" title="Autoplay">⏯️</button>
-      <button id="reportsIcon" class="icon-button" title="Reported Songs">📝</button>
+      <button id="settingsIcon" class="icon-button" title="Settings"><i class="fa fa-cog"></i></button>
+      <button id="autoplayIcon" class="icon-button" title="Autoplay"><i class="fa fa-play"></i></button>
+      <button id="reportsIcon" class="icon-button" title="Reported Songs"><i class="fa fa-list"></i></button>
     </div>
 
+    <!-- autoplay checkbox kept hidden for logic/cookies; toggled via icon -->
+    <input type="checkbox" id="autoplay" name="autoplay" style="display:none;" />
+
     <div class="settings_div hidden" id="settings_div">
-      <div class="text-block">
-        <div class="heading">Autoplay</div>
-        <div>
-          <input type="checkbox" id="autoplay" name="autoplay" />
-          <label for="autoplay">Autoplay</label>
-        </div>
-      </div>
 
       <div class="text-block">
         <div class="heading">Random Playback</div>
@@ -58,7 +50,6 @@
         </div>      
     </div>
         
-
 
       <div class="text-block">
         <div class="heading">Debug</div>

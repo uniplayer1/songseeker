@@ -48,7 +48,7 @@ If you scan a QR code and get a "403 Forbidden" error, it means the web server d
 
 ### 🎛️ Interface improvements (2026)
 * The bulky "Show / Hide settings" control has been replaced with a sleek toolbar of icons just below the title.
-  * ⚙️ **Settings** – show/hide the full settings panel
-  * ⏯️ **Autoplay** – toggle autoplay quickly; icon lights up when enabled
+  * ⚙️ **Settings** – show/hide the full settings panel (autoplay option has been removed from here as it's now redundant)
+  * ⏯️ **Autoplay** – toggle autoplay quickly; icon lights up when enabled and changes to a pause symbol
   * 📝 **Reported Songs** – open a modal listing all song reports collected by the server
 * A new server endpoint (`/api/reports`) returns the contents of the report log, making it easy to build admin scripts or dashboards.

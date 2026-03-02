@@ -144,13 +144,16 @@ h2 {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  font-size: 20px;
+  font-size: 18px; /* controls the icon size */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  transition: transform 0.1s ease, background-color 0.2s ease;
+  transition: transform 0.1s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.icon-button i {
+  pointer-events: none; /* clicks should hit button not icon */
 }
 .icon-button:active {
   transform: scale(0.92);

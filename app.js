@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var autoplayCheckbox = document.getElementById('autoplay');
         autoplayCheckbox.checked = false;
         autoplayCheckbox.disabled = true;
+        // update toolbar icon too
+        updateAutoplayIcon();
     }
 
     qrScanner = new QrScanner(video, result => {
@@ -651,15 +653,25 @@ function toggleSettings() {
 function updateAutoplayIcon() {
     const icon = document.getElementById('autoplayIcon');
     const cb = document.getElementById('autoplay');
+    if (!cb) return;
+    // change active style
     if (cb.checked) {
         icon.classList.add('active');
+        // swap icon to pause
+        icon.querySelector('i').classList.remove('fa-play');
+        icon.querySelector('i').classList.add('fa-pause');
     } else {
         icon.classList.remove('active');
+        icon.querySelector('i').classList.remove('fa-pause');
+        icon.querySelector('i').classList.add('fa-play');
     }
+    // disabled appearance
     if (cb.disabled) {
         icon.classList.add('disabled');
+        icon.querySelector('i').classList.add('fa-ban');
     } else {
         icon.classList.remove('disabled');
+        icon.querySelector('i').classList.remove('fa-ban');
     }
 }
 
