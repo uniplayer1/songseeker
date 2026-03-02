@@ -43,3 +43,12 @@ docker compose up -d --build
 ---
 **Troubleshooting:**
 If you scan a QR code and get a "403 Forbidden" error, it means the web server doesn't have permission to read your music file. Run `chmod -R 755 ./music` again to fix it.
+
+---
+
+### 🎛️ Interface improvements (2026)
+* The bulky "Show / Hide settings" control has been replaced with a sleek toolbar of icons just below the title.
+  * ⚙️ **Settings** – show/hide the full settings panel
+  * ⏯️ **Autoplay** – toggle autoplay quickly; icon lights up when enabled
+  * 📝 **Reported Songs** – open a modal listing all song reports collected by the server
+* A new server endpoint (`/api/reports`) returns the contents of the report log, making it easy to build admin scripts or dashboards.

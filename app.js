@@ -629,24 +629,75 @@ document.getElementById('cancelScanButton').addEventListener('click', function()
     document.getElementById('startScanButton').style.display = 'block';
 });
 
-document.getElementById('cb_settings').addEventListener('click', function() {
-    var cb = document.getElementById('cb_settings');
-    if (cb.checked == true) {
-        document.getElementById('settings_div').style.display = 'block';
-    }
-    else {
-        document.getElementById('settings_div').style.display = 'none';
-    }
-});
 
 document.getElementById('randomplayback').addEventListener('click', function() {
     document.cookie = "RandomPlaybackChecked=" + this.checked + ";max-age=2592000"; //30 Tage
     listCookies();
 });
 
+// toolbar icon actions
+function toggleSettings() {
+    const div = document.getElementById('settings_div');
+    const icon = document.getElementById('settingsIcon');
+    if (div.classList.contains('hidden')) {
+        div.classList.remove('hidden');
+        icon.classList.add('active');
+    } else {
+        div.classList.add('hidden');
+        icon.classList.remove('active');
+    }
+}
+
+function updateAutoplayIcon() {
+    const icon = document.getElementById('autoplayIcon');
+    const cb = document.getElementById('autoplay');
+    if (cb.checked) {
+        icon.classList.add('active');
+    } else {
+        icon.classList.remove('active');
+    }
+    if (cb.disabled) {
+        icon.classList.add('disabled');
+    } else {
+        icon.classList.remove('disabled');
+    }
+}
+
+function fetchReports() {
+    return fetch('/api/reports')
+        .then(r => {
+            if (!r.ok) throw new Error('failed to fetch reports');
+            return r.text();
+        });
+}
+
+// wire up icon buttons
+document.getElementById('settingsIcon').addEventListener('click', toggleSettings);
+document.getElementById('autoplayIcon').addEventListener('click', function() {
+    const cb = document.getElementById('autoplay');
+    if (cb.disabled) return; // no-op when autoplay is not available (e.g. iOS)
+    cb.checked = !cb.checked;
+    cb.dispatchEvent(new Event('click')); // let cookie handler run
+    updateAutoplayIcon();
+});
+document.getElementById('reportsIcon').addEventListener('click', async function() {
+    try {
+        const text = await fetchReports();
+        document.getElementById('reportsList').textContent = text || 'no reports yet';
+        document.getElementById('reportListModal').classList.remove('hidden');
+    } catch (err) {
+        console.error(err);
+        alert('Unable to load report list');
+    }
+});
+document.getElementById('closeReports').addEventListener('click', function() {
+    document.getElementById('reportListModal').classList.add('hidden');
+});
+
 document.getElementById('autoplay').addEventListener('click', function() {
     document.cookie = "autoplayChecked=" + this.checked + ";max-age=2592000"; //30 Tage
     listCookies();
+    updateAutoplayIcon();
 });
 
 document.getElementById('cookies').addEventListener('click', function() {
@@ -678,7 +729,7 @@ function getCookies() {
         isTrueSet = (getCookieValue("RandomPlaybackChecked") === 'true');
         document.getElementById('randomplayback').checked = isTrueSet;
     }
-    if (getCookieValue("autoplayChecked") != "") {
+    if (!document.getElementById('autoplay').disabled && getCookieValue("autoplayChecked") != "") {
         isTrueSet = (getCookieValue("autoplayChecked") === 'true');
         document.getElementById('autoplay').checked = isTrueSet;  
     }
@@ -697,4 +748,7 @@ function toggleAnimation(isPlaying) {
     }
 }
 
-window.addEventListener("DOMContentLoaded", getCookies());
+window.addEventListener("DOMContentLoaded", () => {
+    getCookies();
+    updateAutoplayIcon();
+});

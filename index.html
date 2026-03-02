@@ -31,41 +31,13 @@
   <body>
     <h2>SongSeeker</h2>
 
-    <div id="qr-reader" style="display:none;">
-      <video id="qr-video"></video>
+    <!-- compact toolbar with icons for common actions -->
+    <div id="toolbar" class="toolbar">
+      <button id="settingsIcon" class="icon-button" title="Settings">⚙️</button>
+      <button id="autoplayIcon" class="icon-button" title="Autoplay">⏯️</button>
+      <button id="reportsIcon" class="icon-button" title="Reported Songs">📝</button>
     </div>
 
-    <button id="cancelScanButton" class="button" style="display:none; background-color: var(--accent-stop);">Cancel Scan</button>
-    <button id="startScanButton" class="button_startscan">Start Scan</button>
-    
-    <button id="reportButton" class="button_report" style="display:none;">Report</button>
-
-    <br />
-    <button id="startstop-video" class="button_startstop" disabled>Play</button>
-
-    <div id="equalizer" class="equalizer-container">
-      <div class="bar"></div>
-      <div class="bar"></div>
-      <div class="bar"></div>
-      <div class="bar"></div>
-      <div class="bar"></div>
-    </div>
-    <div id="videoid">Video ID: <span id="video-id"></span></div>
-    <div id="videotitle">Title: <span id="video-title"></span></div>
-    <div id="videoduration">Duration: <span id="video-duration"></span></div>
-    <div id="videoyear">Year: <span id="video-year"></span></div>
-
-    <hr />
-    <br/>
-    <div>
-        <a href="https://github.com/andygruber/songseeker/" target="_blank">View the SongSeeker project on GitHub</a>
-    </div>
-    <br/>
-    <!-- <p id="list"></p> -->
-    <div id="show_hide_settings">
-      <input type="checkbox" id="cb_settings" name="cb_settings" />
-      <label for="cb_settings">Show / Hide settings</label>
-    </div>
     <div class="settings_div hidden" id="settings_div">
       <div class="text-block">
         <div class="heading">Autoplay</div>
@@ -103,6 +75,38 @@
       </div>
     </div>
 
+    <div id="qr-reader" style="display:none;">
+      <video id="qr-video"></video>
+    </div>
+
+    <button id="cancelScanButton" class="button" style="display:none; background-color: var(--accent-stop);">Cancel Scan</button>
+    <button id="startScanButton" class="button_startscan">Start Scan</button>
+    
+    <button id="reportButton" class="button_report" style="display:none;">Report</button>
+
+    <br />
+    <button id="startstop-video" class="button_startstop" disabled>Play</button>
+
+    <div id="equalizer" class="equalizer-container">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+    <div id="videoid">Video ID: <span id="video-id"></span></div>
+    <div id="videotitle">Title: <span id="video-title"></span></div>
+    <div id="videoduration">Duration: <span id="video-duration"></span></div>
+    <div id="videoyear">Year: <span id="video-year"></span></div>
+
+    <hr />
+    <br/>
+    <div>
+        <a href="https://github.com/andygruber/songseeker/" target="_blank">View the SongSeeker project on GitHub</a>
+    </div>
+    <br/>
+    <!-- <p id="list"></p> -->
+
     <div id="player"></div> <audio id="local-player" style="display:none;"></audio><!-- Load YouTube Player -->
 
     <div id="reportModal" class="modal hidden">
@@ -121,6 +125,17 @@
         <div class="modal-actions">
           <button id="submitReport" class="button_startscan">Submit Report</button>
           <button id="cancelReport" class="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- modal showing list of reported songs -->
+    <div id="reportListModal" class="modal hidden">
+      <div class="modal-content text-block">
+        <div class="heading">Reported Songs</div>
+        <div id="reportsList" class="reports-list">Loading...</div>
+        <div class="modal-actions">
+          <button id="closeReports" class="button">Close</button>
         </div>
       </div>
     </div>

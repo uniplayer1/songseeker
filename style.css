@@ -130,6 +130,52 @@ h2 {
   display: none;
 }
 
+/* toolbar that holds small action icons */
+.toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+.icon-button {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  transition: transform 0.1s ease, background-color 0.2s ease;
+}
+.icon-button:active {
+  transform: scale(0.92);
+}
+.icon-button.active {
+  background-color: var(--accent-neon);
+  color: var(--bg-dark);
+}
+.icon-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* the scrollable container inside report list modal */
+.reports-list {
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-size: 13px;
+  background-color: var(--bg-dark);
+  padding: 10px;
+  border: 1px solid #444;
+  border-radius: 8px;
+}
+
 /* Settings Toggle Button */
 #show_hide_settings {
   background-color: var(--bg-card);

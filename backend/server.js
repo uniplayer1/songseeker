@@ -5,7 +5,7 @@ const path = require('path');
 const logFile = path.join(__dirname, 'reports.log');
 
 const server = http.createServer((req, res) => {
-    if (req.method === 'POST' && req.url === '/report') {
+    if (req.method === 'POST' && (req.url === '/report' || req.url === '/api/report')) {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
@@ -29,6 +29,16 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify({ error: 'Server error' }));
             }
         });
+    } else if (req.method === 'GET' && (req.url === '/reports' || req.url === '/api/reports')) {
+        // return the contents of the log file so admin can inspect reported songs
+        try {
+            const data = fs.readFileSync(logFile, { encoding: 'utf8' });
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end(data);
+        } catch (err) {
+            res.writeHead(500);
+            res.end('Unable to read reports');
+        }
     } else {
         res.writeHead(404);
         res.end();
