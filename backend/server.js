@@ -17,13 +17,16 @@ const server = http.createServer(async (req, res) => {
                 const data = JSON.parse(body);
                 const timestamp = new Date().toISOString();
                 
-                const logEntry = `[${timestamp}] [${(data.type || 'UNKNOWN').toUpperCase()}] REASON: ${data.reason}
-   -> TITLE:   ${data.title}
-   -> PLAYING: ${data.resolvedUrl}
-   -> SCANNED: ${data.originalScan}
---------------------------------------------------\n`;
+                const logData = {
+                    timestamp,
+                    type: (data.type || 'UNKNOWN').toUpperCase(),
+                    reason: data.reason,
+                    title: data.title,
+                    resolvedUrl: data.resolvedUrl,
+                    originalScan: data.originalScan
+                };
                 
-                await fs.appendFile(logFile, logEntry);
+                await fs.appendFile(logFile, JSON.stringify(logData) + '\n');
                 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'success' }));
@@ -37,24 +40,35 @@ const server = http.createServer(async (req, res) => {
     // --- REPORT RETRIEVAL (GET) ---
     else if (method === 'GET' && (url === '/reports' || url === '/api/reports')) {
         try {
-            // Check if file exists first to avoid throwing error on initial load
-            let data = '';
+            let fileContent = '';
             try {
-                data = await fs.readFile(logFile, 'utf8');
+                fileContent = await fs.readFile(logFile, 'utf8');
             } catch (readErr) {
                 if (readErr.code === 'ENOENT') {
-                    data = 'No reports found yet.';
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify([]));
+                    return;
                 } else {
                     throw readErr;
                 }
             }
             
-            res.writeHead(200, { 'Content-Type': 'text/plain' });
-            res.end(data);
+            const lines = fileContent.trim().split('\n');
+            const reports = lines.map(line => {
+                try {
+                    return JSON.parse(line);
+                } catch (e) {
+                    // Fallback for old format if necessary, or just ignore
+                    return null;
+                }
+            }).filter(r => r !== null);
+            
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(reports));
         } catch (err) {
             console.error('Error reading reports:', err);
             res.writeHead(500);
-            res.end('Unable to read reports');
+            res.end(JSON.stringify({ error: 'Unable to read reports' }));
         }
     } 
     // --- 404 NOT FOUND ---

@@ -7,6 +7,7 @@ let playbackDuration = 30; // Default playback duration in seconds
 let qrScanner;
 let csvCache = {};
 let lastDecodedText = ""; // Store the last decoded text to prevent double-scans
+let currentScannedLink = ""; // Store the link for the currently active song
 let currentStartTime = 0;
 let currentPlayerType = 'youtube'; // 'youtube' or 'local'
 let audioCtx;
@@ -120,6 +121,7 @@ function initEventListeners() {
 
 // --- CORE LOGIC: SCANNING ---
 async function handleScannedLink(decodedText) {
+    currentScannedLink = decodedText; // Save the link for reporting
     // Check if local audio
     if (decodedText.toLowerCase().endsWith('.mp3') || decodedText.toLowerCase().endsWith('.wav')) {
         playLocalAudio(decodedText);
@@ -198,7 +200,7 @@ function stopScanning() {
 function prepareUIForPlayback() {
     stopScanning();
     UI.reportBtn().style.display = 'block';
-    lastDecodedText = ""; // Reset for next scan
+    lastDecodedText = ""; // Reset scanner so same link can be scanned again later
 }
 
 // --- CORE LOGIC: PLAYBACK ---
@@ -422,9 +424,9 @@ async function submitReport() {
     
     let resolvedUrl = "";
     if (currentPlayerType === 'local') {
-        resolvedUrl = UI.localPlayer().src || lastDecodedText;
+        resolvedUrl = UI.localPlayer().src || currentScannedLink;
     } else {
-        resolvedUrl = videoIdText ? `https://www.youtube.com/watch?v=${videoIdText}` : lastDecodedText;
+        resolvedUrl = videoIdText ? `https://www.youtube.com/watch?v=${videoIdText}` : currentScannedLink;
     }
 
     try {
@@ -436,7 +438,7 @@ async function submitReport() {
                 title: title, 
                 reason: reason,
                 resolvedUrl: resolvedUrl,      
-                originalScan: lastDecodedText  
+                originalScan: currentScannedLink  
             })
         });
         
@@ -463,13 +465,45 @@ async function showReports() {
     try {
         const response = await fetch('/api/reports');
         if (!response.ok) throw new Error('failed to fetch reports');
-        const text = await response.text();
-        UI.reportsList().textContent = text || 'No reports yet';
+        const reports = await response.json();
+        
+        UI.reportsList().innerHTML = '';
+        
+        if (reports.length === 0) {
+            UI.reportsList().textContent = 'No reports yet';
+        } else {
+            // Sort by latest first
+            reports.reverse().forEach(report => {
+                const reportEl = document.createElement('div');
+                reportEl.className = 'report-entry';
+                
+                const date = new Date(report.timestamp).toLocaleString();
+                
+                reportEl.innerHTML = `
+                    <div class="report-header">
+                        <span class="report-type ${report.type.toLowerCase()}">${report.type}</span>
+                        <span class="report-date">${date}</span>
+                    </div>
+                    <div class="report-title">${report.title}</div>
+                    <div class="report-reason">Reason: ${formatReason(report.reason)}</div>
+                    <div class="report-links">
+                        <a href="${report.resolvedUrl}" target="_blank" title="Playing Link"><i class="fa fa-play-circle"></i> Played</a>
+                        <a href="${report.originalScan}" target="_blank" title="Original Scan"><i class="fa fa-qrcode"></i> Scanned</a>
+                    </div>
+                `;
+                UI.reportsList().appendChild(reportEl);
+            });
+        }
+        
         UI.reportListModal().classList.remove('hidden');
     } catch (err) {
         console.error(err);
         alert('Unable to load report list');
     }
+}
+
+function formatReason(reason) {
+    return reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 async function getCachedCsv(url) {
