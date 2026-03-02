@@ -152,11 +152,12 @@ async function handleScannedLink(decodedText) {
         document.getElementById('reportButton').style.display = 'block';
         lastDecodedText = ""; // Reset the last decoded text
 
-        document.getElementById('video-id').textContent = youtubeLinkData.videoId;  
+        document.getElementById('video-id').textContent = youtubeLinkData.videoId;
 
         console.log(youtubeLinkData.videoId);
         currentStartTime = youtubeLinkData.startTime || 0;
-        player.cueVideoById(youtubeLinkData.videoId, currentStartTime);   
+        player.cueVideoById(youtubeLinkData.videoId, currentStartTime);
+        document.getElementById('startstop-video').disabled = false;
         
     }
     
@@ -326,7 +327,8 @@ function playLocalAudio(url) {
 
     localPlayer.onloadedmetadata = function() {
         document.getElementById('video-duration').textContent = formatDuration(localPlayer.duration);
-        document.getElementById('startstop-video').style.background = "var(--accent-play)"; 
+        document.getElementById('startstop-video').disabled = false;
+        document.getElementById('startstop-video').style.background = "var(--accent-play)";
         
         // Let's force autoplay regardless of the device!
         if (document.getElementById('autoplay').checked == true) {
@@ -578,6 +580,7 @@ document.getElementById('startScanButton').addEventListener('click', function() 
     // UI zuverlässig zurücksetzen (Equalizer stoppen und auf Play stellen)
     document.getElementById('startstop-video').innerHTML = "Play";
     document.getElementById('startstop-video').style.background = "var(--accent-play)";
+    document.getElementById('startstop-video').disabled = true;
     toggleAnimation(false);
 
     // Buttons austauschen und Scanner anzeigen
