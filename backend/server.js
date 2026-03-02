@@ -1,48 +1,67 @@
 const http = require('http');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 
 const logFile = path.join(__dirname, 'reports.log');
+const PORT = 3000;
 
-const server = http.createServer((req, res) => {
-    if (req.method === 'POST' && (req.url === '/report' || req.url === '/api/report')) {
+const server = http.createServer(async (req, res) => {
+    const { method, url } = req;
+
+    // --- REPORT SUBMISSION (POST) ---
+    if (method === 'POST' && (url === '/report' || url === '/api/report')) {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
-        req.on('end', () => {
+        req.on('end', async () => {
             try {
                 const data = JSON.parse(body);
                 const timestamp = new Date().toISOString();
                 
-                // Formatted log entry with all the new info
-                const logEntry = `[${timestamp}] [${data.type.toUpperCase()}] REASON: ${data.reason}
+                const logEntry = `[${timestamp}] [${(data.type || 'UNKNOWN').toUpperCase()}] REASON: ${data.reason}
    -> TITLE:   ${data.title}
    -> PLAYING: ${data.resolvedUrl}
    -> SCANNED: ${data.originalScan}
 --------------------------------------------------\n`;
                 
-                fs.appendFileSync(logFile, logEntry);
+                await fs.appendFile(logFile, logEntry);
                 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'success' }));
             } catch (err) {
-                res.writeHead(500);
-                res.end(JSON.stringify({ error: 'Server error' }));
+                console.error('Error processing report:', err);
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Server error processing report' }));
             }
         });
-    } else if (req.method === 'GET' && (req.url === '/reports' || req.url === '/api/reports')) {
-        // return the contents of the log file so admin can inspect reported songs
+    } 
+    // --- REPORT RETRIEVAL (GET) ---
+    else if (method === 'GET' && (url === '/reports' || url === '/api/reports')) {
         try {
-            const data = fs.readFileSync(logFile, { encoding: 'utf8' });
+            // Check if file exists first to avoid throwing error on initial load
+            let data = '';
+            try {
+                data = await fs.readFile(logFile, 'utf8');
+            } catch (readErr) {
+                if (readErr.code === 'ENOENT') {
+                    data = 'No reports found yet.';
+                } else {
+                    throw readErr;
+                }
+            }
+            
             res.writeHead(200, { 'Content-Type': 'text/plain' });
             res.end(data);
         } catch (err) {
+            console.error('Error reading reports:', err);
             res.writeHead(500);
             res.end('Unable to read reports');
         }
-    } else {
+    } 
+    // --- 404 NOT FOUND ---
+    else {
         res.writeHead(404);
-        res.end();
+        res.end('Not Found');
     }
 });
 
-server.listen(3000, () => console.log('Logger listening on port 3000'));
+server.listen(PORT, () => console.log(`SongSeeker backend listening on port ${PORT}`));

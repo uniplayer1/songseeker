@@ -1,54 +1,82 @@
-# SongSeeker (Local Audio Edition)
+# 🎵 SongSeeker (Local Audio Edition)
 
-This is a custom fork of the [SongSeeker](https://github.com/andygruber/songseeker) project, modified to support **fully self-hosted, offline `.mp3` playback**. 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Docker Support](https://img.shields.io/badge/Docker-Supported-blue?logo=docker)](https://www.docker.com/)
+[![Made with JavaScript](https://img.shields.io/badge/Made%20with-JavaScript-F7DF1E?logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
-By hosting your own music files via a Docker container, you can completely avoid YouTube "link rot" (deleted videos, country restrictions, or changed URLs) ensuring your custom Hitster cards work forever.
+A custom fork of [SongSeeker](https://github.com/andygruber/songseeker), optimized for **self-hosted, offline-capable music playback**. This version is specifically designed to eliminate "link rot" in board games like Hitster by hosting your own `.mp3` library.
 
-## 🚀 Quick Setup Guide
+---
 
-### Prerequisites
-* Docker and Docker Compose installed on your host machine / NAS.
-* Your `.mp3` music files.
+## ✨ Key Features
 
-### 1. Clone the Repository
-Clone this repository to your server:
+*   **Offline First:** Host your own music library via Docker. No more broken YouTube links or region blocks.
+*   **Dual Player Engine:** Seamlessly handles both local `.mp3` files and standard YouTube/Rockster/Hitster URLs.
+*   **Smart Metadata:** Automatically extracts ID3 tags (Title, Artist, Year) from your local files.
+*   **Random Playback:** Custom "Game Mode" starts songs at random positions for a specified duration to keep the game challenging.
+*   **Modern UI:** Sleek dark mode interface with an animated equalizer and quick-access toolbar.
+*   **PWA Ready:** Install it as a web app on your mobile device for a native feel.
+*   **Issue Reporting:** Built-in reporting system to track broken links or incorrect metadata.
+
+---
+
+## 🚀 Quick Start Guide
+
+### 1. Prerequisites
+*   [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed on your server or NAS.
+*   Your music collection in `.mp3` or `.wav` format.
+
+### 2. Installation
 ```bash
 git clone https://github.com/uniplayer1/songseeker.git
 cd songseeker
 ```
 
-### 2. Prepare Your Music Folder
-Create a `music` directory in the root of the project and place your `.mp3` files inside it.
+### 3. Prepare Your Music
+Create a `music` folder and copy your files into it.
 ```bash
 mkdir music
-# Drop your .mp3 files into the ./music folder
+# Copy your .mp3 files into ./music/
 ```
 
-**Crucial Step:** Ensure your host machine allows the Docker container to read these files by setting the correct permissions:
-```bash
-chmod -R 755 ./music
-```
+> **Note:** Ensure Docker has read permissions for your music:
+> `chmod -R 755 ./music`
 
-### 3. Build and Start the Container
-Run the following command to build the custom Docker image and start up the web server:
+### 4. Launch
 ```bash
 docker compose up -d --build
 ```
 
-### 4. Play!
-* The SongSeeker app is now available at `http://<YOUR_SERVER_IP>:8887`.
-* Your music files are accessible at `http://<YOUR_SERVER_IP>:8887/music/your-song.mp3`.
-* When generating your custom Hitster QR codes, simply use your local network URL instead of a YouTube link!
-
----
-**Troubleshooting:**
-If you scan a QR code and get a "403 Forbidden" error, it means the web server doesn't have permission to read your music file. Run `chmod -R 755 ./music` again to fix it.
+Access the app at `http://<YOUR_SERVER_IP>:8887`.
 
 ---
 
-### 🎛️ Interface improvements (2026)
-* The bulky "Show / Hide settings" control has been replaced with a sleek toolbar of icons just below the title.
-  * ⚙️ **Settings** – show/hide the full settings panel (autoplay option has been removed from here as it's now redundant)
-  * ⏯️ **Autoplay** – toggle autoplay quickly; icon lights up when enabled and changes to a pause symbol
-  * 📝 **Reported Songs** – open a modal listing all song reports collected by the server
-* A new server endpoint (`/api/reports`) returns the contents of the report log, making it easy to build admin scripts or dashboards.
+## 🛠️ Usage Tips
+
+### Custom QR Codes
+When generating QR codes for your custom Hitster cards, simply use the direct URL to your hosted music:
+`http://<YOUR_SERVER_IP>:8887/music/song-name.mp3`
+
+### Autoplay & iOS
+Most mobile browsers (especially iOS) block autoplay with sound. SongSeeker includes an **"Audio Unlock"** mechanism:
+1.  Click **"Start Scan"**.
+2.  The app will perform a silent playback unlock.
+3.  Once the QR is scanned, the song will play automatically (if enabled in settings).
+
+### Reporting Songs
+If a song is incorrect or has bad quality, use the **Report** button. Admins can view these reports by clicking the 📝 icon in the toolbar.
+
+---
+
+## 🏗️ Architecture
+
+*   **Frontend:** Pure HTML5/CSS3/JavaScript (ES Modules).
+*   **Scanning:** [qr-scanner](https://github.com/nimiq/qr-scanner) for fast, lightweight decoding.
+*   **Metadata:** [jsmediatags](https://github.com/aadsm/jsmediatags) for client-side ID3 parsing.
+*   **Backend:** Node.js micro-service for logging reports.
+*   **Proxy:** Nginx for serving static files and routing API requests.
+
+---
+
+## ⚖️ License
+Distributed under the MIT License. See `LICENSE` for more information.

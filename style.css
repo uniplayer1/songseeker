@@ -21,26 +21,25 @@ body {
   align-items: center;
 }
 
-/* --- ANIMIERTER NEON-TITEL --- */
+/* --- ANIMATED NEON TITLE --- */
 h2 {
   font-weight: 900;
-  font-size: 2.2rem; /* Etwas größer */
+  font-size: 2.2rem;
   text-transform: uppercase;
   letter-spacing: 4px;
   margin-bottom: 25px;
   
-  /* Farbverlauf, der sich bewegt */
+  /* Moving color gradient */
   background: linear-gradient(45deg, var(--accent-neon), #7000ff, #00d4ff, var(--accent-neon));
   background-size: 300% auto;
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
   
-  /* Animation für Verlauf und pulsierendes Leuchten */
+  /* Animation for gradient and pulsating glow */
   animation: shineText 4s linear infinite, pulseGlow 2s ease-in-out infinite alternate;
 }
 
-/* Die Keyframes für den Titel-Effekt (am besten direkt unter das h2 packen) */
 @keyframes shineText {
   to { background-position: 300% center; }
 }
@@ -54,7 +53,7 @@ h2 {
 #qr-reader {
   width: 90%;
   max-width: 350px;
-  aspect-ratio: 1 / 1; /* Forces a perfect square */
+  aspect-ratio: 1 / 1;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
@@ -65,10 +64,11 @@ h2 {
   align-items: center;
   justify-content: center;
 }
+
 #qr-video {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Crops the video to fit the square beautifully */
+  object-fit: cover;
 }
 
 /* Modern App Buttons */
@@ -89,16 +89,20 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+
 .button:active, .button_startscan:active, .button_startstop:active {
   transform: scale(0.96);
 }
+
 .button_startscan {
   background: linear-gradient(135deg, #ff007f, #7000ff);
   color: white;
 }
+
 .button_startstop {
   background-color: var(--accent-play);
 }
+
 .button_startstop:disabled {
   background-color: #2a2a2a;
   color: #555;
@@ -107,7 +111,7 @@ h2 {
   box-shadow: none;
 }
 
-/* Hide Debug Info by Default */
+/* Song Information Layout */
 #videoid, #videotitle, #videoduration, #videoyear {
   display: none;
   background-color: var(--bg-card);
@@ -121,6 +125,7 @@ h2 {
   font-size: 14px;
   color: var(--text-muted);
 }
+
 #videotitle span, #video-duration {
   color: var(--text-main);
   font-weight: bold;
@@ -130,13 +135,14 @@ h2 {
   display: none;
 }
 
-/* toolbar that holds small action icons */
+/* Toolbar Styling */
 .toolbar {
   display: flex;
   gap: 12px;
   margin-bottom: 15px;
   justify-content: center;
 }
+
 .icon-button {
   background-color: var(--bg-card);
   color: var(--text-main);
@@ -144,7 +150,7 @@ h2 {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  font-size: 18px; /* controls the icon size */
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,22 +158,26 @@ h2 {
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   transition: transform 0.1s ease, background-color 0.2s ease, color 0.2s ease;
 }
+
 .icon-button i {
-  pointer-events: none; /* clicks should hit button not icon */
+  pointer-events: none;
 }
+
 .icon-button:active {
   transform: scale(0.92);
 }
+
 .icon-button.active {
   background-color: var(--accent-neon);
   color: var(--bg-dark);
 }
+
 .icon-button.disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* the scrollable container inside report list modal */
+/* Report Modal & List */
 .reports-list {
   max-height: 300px;
   overflow-y: auto;
@@ -179,44 +189,14 @@ h2 {
   border-radius: 8px;
 }
 
-/* Settings Toggle Button */
-#show_hide_settings {
-  background-color: var(--bg-card);
-  border-radius: 50px;
-  margin: 20px 0 10px 0;
-  width: 90%;
-  max-width: 350px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  transition: transform 0.1s ease;
-}
-#show_hide_settings:active {
-  transform: scale(0.96);
-}
-#show_hide_settings label {
-  color: var(--text-main);
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 14px;
-  cursor: pointer;
-  display: block;
-  padding: 16px 32px;
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  border-radius: 50px;
-}
-#show_hide_settings input[type="checkbox"] {
-  display: none;
-}
-
-/* --- THE SETTINGS UI FIX: Clean & Modern --- */
+/* Settings UI Components */
 .settings_div {
   background-color: transparent;
   width: 90%;
   max-width: 350px;
   margin: 5px 0;
 }
+
 .text-block {
   background-color: var(--bg-card);
   padding: 15px;
@@ -225,6 +205,7 @@ h2 {
   border-left: 4px solid var(--accent-neon);
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
+
 .heading {
   font-weight: 800;
   color: var(--accent-neon);
@@ -233,17 +214,20 @@ h2 {
   font-size: 13px;
   letter-spacing: 1px;
 }
+
 .settings_div label {
   color: var(--text-main);
   font-size: 14px;
   cursor: pointer;
 }
+
 .settings_div input[type="checkbox"] {
   accent-color: var(--accent-neon);
   transform: scale(1.3);
   margin-right: 12px;
   cursor: pointer;
 }
+
 .settings_div input[type="number"] {
   background-color: var(--bg-dark);
   border: 1px solid #444;
@@ -266,61 +250,56 @@ hr {
   margin: 20px 0;
 }
 
-/* The Equalizer Animation - Verbessert & Lücke gefixt */
+/* Equalizer Animation */
 .equalizer-container {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 0;         /* Schrumpft auf 0, wenn inaktiv */
-  margin: 0;         /* Nimmt keinen Platz weg */
-  overflow: hidden;  /* Versteckt den Inhalt beim Schrumpfen */
-  gap: 8px;          /* Etwas mehr Platz zwischen den Balken */
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  gap: 8px;
   opacity: 0;
-  /* Weicher Übergang beim Aufklappen */
   transition: height 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
 }
 
 .equalizer-container.playing {
-  height: 50px;      /* Volle Höhe beim Abspielen */
-  margin: 20px 0;    /* Schöner Abstand */
+  height: 50px;
+  margin: 20px 0;
   opacity: 1;
 }
 
-/* --- DER KORRIGIERTE, DYNAMISCHE EQUALIZER --- */
 .bar {
   width: 14px; 
   background: linear-gradient(to top, var(--accent-neon), #7000ff);
   border-radius: 6px;
   box-shadow: 0 0 12px var(--accent-neon);
   transform-origin: bottom;
-  /* WICHTIG: Hier hat die Basis-Zeit (1s) gefehlt, sonst streikt der Browser! */
   animation: soundWave 1s infinite ease-in-out alternate;
 }
 
-/* Wir geben jedem Balken wieder seine eigene Höhe PLUS individuelles Chaos */
 .bar:nth-child(1) { height: 30%; animation-duration: 0.7s; animation-delay: 0.0s; }
 .bar:nth-child(2) { height: 60%; animation-duration: 1.1s; animation-delay: 0.2s; }
 .bar:nth-child(3) { height: 100%; animation-duration: 0.8s; animation-delay: 0.4s; }
 .bar:nth-child(4) { height: 70%; animation-duration: 1.0s; animation-delay: 0.1s; }
 .bar:nth-child(5) { height: 40%; animation-duration: 0.9s; animation-delay: 0.3s; }
 
-/* Die neue Animation: Höhen und Farben ändern sich */
 @keyframes soundWave {
   0% { 
     transform: scaleY(0.1); 
-    filter: hue-rotate(0deg); /* Startfarbe (Pink/Lila) */
+    filter: hue-rotate(0deg); 
   }
   50% { 
     transform: scaleY(0.6); 
   }
   100% { 
     transform: scaleY(1); 
-    filter: hue-rotate(45deg); /* Endfarbe (wechselt leicht ins Bläuliche/Rote) */
-    box-shadow: 0 0 20px #7000ff; /* Der Glow ändert sich mit */
+    filter: hue-rotate(45deg); 
+    box-shadow: 0 0 20px #7000ff; 
   }
 }
 
-/* Modernes Link-Styling für den GitHub-Link */
+/* Modern Link Styling */
 a {
   color: var(--text-muted);
   text-decoration: none;
@@ -336,11 +315,11 @@ a {
 
 a:hover, a:active {
   color: var(--text-main);
-  background-color: var(--bg-card); /* Leichter Hintergrund beim Hovern */
+  background-color: var(--bg-card);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* --- REPORT BUTTON & MODAL --- */
+/* Report Action Button */
 .button_report {
   position: fixed;
   bottom: 20px;
@@ -353,18 +332,19 @@ a:hover, a:active {
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;
-  width: auto;          /* Overrides the large width */
+  width: auto;
   max-width: none;
   text-transform: uppercase;
   transition: all 0.2s ease;
-  z-index: 100;         /* Keeps it on top of other elements */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Nice floating drop-shadow */
+  z-index: 100;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 .button_report:active {
   transform: scale(0.96);
 }
 
+/* Modals */
 .modal {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -376,15 +356,18 @@ a:hover, a:active {
   opacity: 1;
   transition: opacity 0.3s ease;
 }
+
 .modal.hidden {
   opacity: 0;
   pointer-events: none;
 }
+
 .modal-content {
   width: 90%;
   max-width: 350px;
   box-sizing: border-box;
 }
+
 .modern-select {
   width: 100%;
   padding: 12px;
@@ -396,14 +379,17 @@ a:hover, a:active {
   font-size: 14px;
   outline: none;
 }
+
 .modern-select:focus {
   border-color: var(--accent-neon);
 }
+
 .modal-actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .modal-actions button {
   width: 100%;
   margin: 0;
