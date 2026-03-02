@@ -18,6 +18,7 @@ const server = http.createServer(async (req, res) => {
                 const timestamp = new Date().toISOString();
                 
                 const logData = {
+                    id: Date.now().toString() + Math.floor(Math.random() * 1000).toString(),
                     timestamp,
                     type: (data.type || 'UNKNOWN').toUpperCase(),
                     reason: data.reason,
@@ -53,7 +54,7 @@ const server = http.createServer(async (req, res) => {
                 }
             }
             
-            const lines = fileContent.trim().split('\n');
+            const lines = fileContent.split('\n').filter(line => line.trim() !== '');
             const reports = lines.map(line => {
                 try {
                     return JSON.parse(line);
@@ -71,6 +72,36 @@ const server = http.createServer(async (req, res) => {
             res.end(JSON.stringify({ error: 'Unable to read reports' }));
         }
     } 
+    // --- REPORT DELETION (DELETE) ---
+    else if (method === 'DELETE' && (url === '/report' || url === '/api/report')) {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+            try {
+                const { id } = JSON.parse(body);
+                if (!id) throw new Error('No ID provided');
+
+                const fileContent = await fs.readFile(logFile, 'utf8');
+                const lines = fileContent.split('\n').filter(line => line.trim() !== '');
+                const updatedLines = lines.filter(line => {
+                    try {
+                        return JSON.parse(line).id !== id;
+                    } catch (e) {
+                        return true; // Keep lines that aren't JSON
+                    }
+                });
+
+                await fs.writeFile(logFile, updatedLines.length > 0 ? updatedLines.join('\n') + '\n' : '');
+                
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'success' }));
+            } catch (err) {
+                console.error('Error deleting report:', err);
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Server error deleting report' }));
+            }
+        });
+    }
     // --- 404 NOT FOUND ---
     else {
         res.writeHead(404);

@@ -225,6 +225,28 @@ h2 {
   color: var(--text-muted);
 }
 
+.delete-report-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  transition: color 0.2s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-report-btn:hover {
+  color: var(--accent-stop);
+  transform: scale(1.1);
+}
+
+.delete-report-btn:active {
+  transform: scale(0.9);
+}
+
 .report-title {
   font-weight: bold;
   font-size: 14px;

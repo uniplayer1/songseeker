@@ -70,8 +70,6 @@ function initQrScanner() {
 function initEventListeners() {
     // Reporting
     UI.reportBtn().addEventListener('click', () => {
-        const currentTitle = UI.videoTitle().textContent;
-        UI.reportSongTitle().textContent = currentTitle || "Unknown";
         UI.reportModal().classList.remove('hidden');
     });
 
@@ -482,7 +480,10 @@ async function showReports() {
                 reportEl.innerHTML = `
                     <div class="report-header">
                         <span class="report-type ${report.type.toLowerCase()}">${report.type}</span>
-                        <span class="report-date">${date}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="report-date">${date}</span>
+                            <button class="delete-report-btn" data-id="${report.id}" title="Delete Report"><i class="fa fa-trash"></i></button>
+                        </div>
                     </div>
                     <div class="report-title">${report.title}</div>
                     <div class="report-reason">Reason: ${formatReason(report.reason)}</div>
@@ -492,6 +493,30 @@ async function showReports() {
                     </div>
                 `;
                 UI.reportsList().appendChild(reportEl);
+            });
+
+            // Add event listeners for delete buttons
+            UI.reportsList().querySelectorAll('.delete-report-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    if (confirm('Delete this report?')) {
+                        try {
+                            const res = await fetch('/api/report', {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id })
+                            });
+                            if (res.ok) {
+                                showReports(); // Refresh list
+                            } else {
+                                alert('Failed to delete report');
+                            }
+                        } catch (err) {
+                            console.error('Delete error:', err);
+                            alert('Error deleting report');
+                        }
+                    }
+                });
             });
         }
         
