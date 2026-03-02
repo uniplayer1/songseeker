@@ -15,6 +15,7 @@ A custom fork of [SongSeeker](https://github.com/andygruber/songseeker), optimiz
 *   **Smart Metadata:** Automatically extracts ID3 tags (Title, Artist, Year) from your local files.
 *   **Random Playback:** Custom "Game Mode" starts songs at random positions for a specified duration to keep the game challenging.
 *   **Modern UI:** Sleek dark mode interface with an animated equalizer and quick-access toolbar.
+*   **Volume Normalization:** Built-in audio compressor for local files to ensure consistent volume levels across your library (ON by default).
 *   **PWA Ready:** Install it as a web app on your mobile device for a native feel.
 *   **Issue Reporting:** Built-in reporting system to track broken links or incorrect metadata.
 

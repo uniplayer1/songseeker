@@ -9,6 +9,9 @@ let csvCache = {};
 let lastDecodedText = ""; // Store the last decoded text to prevent double-scans
 let currentStartTime = 0;
 let currentPlayerType = 'youtube'; // 'youtube' or 'local'
+let audioCtx;
+let audioSource;
+let compressor;
 
 // --- CONSTANTS ---
 const UI = {
@@ -24,6 +27,8 @@ const UI = {
     videoDuration: () => document.getElementById('video-duration'),
     videoYear: () => document.getElementById('video-year'),
     autoplayCb: () => document.getElementById('autoplay'),
+    normalizeCb: () => document.getElementById('normalize'),
+    normalizeSettingCb: () => document.getElementById('normalize-setting'),
     randomPlaybackCb: () => document.getElementById('randomplayback'),
     playbackDurationInput: () => document.getElementById('playback-duration'),
     songInfoCb: () => document.getElementById('songinfo'),
@@ -85,6 +90,7 @@ function initEventListeners() {
     // Settings & UI Toggles
     document.getElementById('settingsIcon').addEventListener('click', toggleSettings);
     document.getElementById('autoplayIcon').addEventListener('click', toggleAutoplay);
+    document.getElementById('normalizeIcon').addEventListener('click', toggleNormalization);
     document.getElementById('reportsIcon').addEventListener('click', showReports);
     document.getElementById('closeReports').addEventListener('click', () => {
         UI.reportListModal().classList.add('hidden');
@@ -98,6 +104,12 @@ function initEventListeners() {
     UI.autoplayCb().addEventListener('click', () => {
         saveSetting("autoplayChecked", UI.autoplayCb().checked);
         updateAutoplayIcon();
+    });
+    UI.normalizeSettingCb().addEventListener('click', () => {
+        UI.normalizeCb().checked = UI.normalizeSettingCb().checked;
+        saveSetting("normalizeChecked", UI.normalizeCb().checked);
+        updateNormalizeIcon();
+        applyNormalization();
     });
 
     // Debug button
@@ -250,10 +262,41 @@ function calculateRandomTimes(duration, customStartTime = 0) {
 }
 
 // --- LOCAL PLAYER ---
+function setupAudioNodes() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioSource = audioCtx.createMediaElementSource(UI.localPlayer());
+        compressor = audioCtx.createDynamicsCompressor();
+        
+        // Settings for "normalization"
+        compressor.threshold.setValueAtTime(-24, audioCtx.currentTime);
+        compressor.knee.setValueAtTime(40, audioCtx.currentTime);
+        compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+        compressor.attack.setValueAtTime(0, audioCtx.currentTime);
+        compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+        
+        applyNormalization();
+    } else if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function applyNormalization() {
+    if (!audioSource) return;
+    audioSource.disconnect();
+    if (UI.normalizeCb().checked) {
+        audioSource.connect(compressor);
+        compressor.connect(audioCtx.destination);
+    } else {
+        audioSource.connect(audioCtx.destination);
+    }
+}
+
 function playLocalAudio(url) {
     prepareUIForPlayback();
     currentPlayerType = 'local';
     
+    setupAudioNodes();
     const localPlayer = UI.localPlayer();
     localPlayer.src = url;
     
@@ -538,7 +581,17 @@ function loadPersistedSettings() {
     const randomCookie = getCookie("RandomPlaybackChecked");
     if (randomCookie !== "") UI.randomPlaybackCb().checked = (randomCookie === 'true');
 
+    const normalizeCookie = getCookie("normalizeChecked");
+    if (normalizeCookie !== "") {
+        UI.normalizeCb().checked = (normalizeCookie === 'true');
+    } else {
+        // Default to true
+        UI.normalizeCb().checked = true;
+    }
+    UI.normalizeSettingCb().checked = UI.normalizeCb().checked;
+
     updateAutoplayIcon();
+    updateNormalizeIcon();
     renderCookieList();
 }
 
@@ -572,6 +625,15 @@ function toggleAutoplay() {
     updateAutoplayIcon();
 }
 
+function toggleNormalization() {
+    const cb = UI.normalizeCb();
+    cb.checked = !cb.checked;
+    UI.normalizeSettingCb().checked = cb.checked;
+    saveSetting("normalizeChecked", cb.checked);
+    updateNormalizeIcon();
+    applyNormalization();
+}
+
 function updateAutoplayIcon() {
     const icon = document.getElementById('autoplayIcon');
     const cb = UI.autoplayCb();
@@ -588,6 +650,14 @@ function updateAutoplayIcon() {
         icon.classList.remove('disabled');
         iconEl.classList.remove('fa-ban');
     }
+}
+
+function updateNormalizeIcon() {
+    const icon = document.getElementById('normalizeIcon');
+    const cb = UI.normalizeCb();
+    if (!cb) return;
+
+    icon.classList.toggle('active', cb.checked);
 }
 
 function toggleSongInfoVisibility() {
