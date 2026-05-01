@@ -889,6 +889,8 @@ Examples:
                 "issues": r.issues,
                 "suggested_filename": r.suggested_filename,
             }
+            if r.ai_verdict:
+                entry["ai_notes"] = r.ai_verdict.get("notes", "")
             if r.mp3:
                 entry["file"] = str(r.mp3.path.name)
                 entry["id3_artist"] = r.mp3.artist

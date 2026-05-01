@@ -267,6 +267,9 @@ def build_search_suggestion_prompt(missed_songs: list[dict]) -> str:
         lines.append(f"--- ENTRY {idx} ---")
         lines.append(f"Original Artist: {song['artist']}")
         lines.append(f"Original Title: {song['title']}")
+        if song.get("ai_notes"):
+            lines.append(f"Previous attempt was wrong because: {song['ai_notes']}")
+            lines.append("IMPORTANT: Avoid the version described above. Find the original/correct version instead.")
         lines.append("")
     return "\n".join(lines)
 
@@ -346,8 +349,9 @@ def download_from_csv(csv_path: Path, output_path: Path, arl: str, bitrate: str 
                 artist = normalize_text(row.get("Artist", ""))
                 title = normalize_text(row.get("Title", ""))
                 year = normalize_text(row.get("Year", ""))
+                ai_notes = normalize_text(row.get("ai_notes", ""))
                 if artist and title:
-                    songs.append({"artist": artist, "title": title, "year": year})
+                    songs.append({"artist": artist, "title": title, "year": year, "ai_notes": ai_notes})
         else:
             # No header — assume standard column order: Artist, Title, Year, backcol
             reader = csv.reader(f, delimiter=delimiter)
@@ -356,7 +360,7 @@ def download_from_csv(csv_path: Path, output_path: Path, arl: str, bitrate: str 
                 title = normalize_text(parts[1] if len(parts) > 1 else "")
                 year = normalize_text(parts[2] if len(parts) > 2 else "")
                 if artist and title:
-                    songs.append({"artist": artist, "title": title, "year": year})
+                    songs.append({"artist": artist, "title": title, "year": year, "ai_notes": ""})
 
     print(f"Loaded {len(songs)} songs from {csv_path}")
     print(f"Output folder: {output_path}")

@@ -446,7 +446,7 @@ def step_verify(csv_path: Path, music_dir: Path, base_url: str, non_interactive:
             import json as _json
             with open(report_json, "r", encoding="utf-8") as f:
                 report = _json.load(f)
-            flagged = [r for r in report if r.get("issues")]
+            flagged = [r for r in report if r.get("issues") and r.get("file")]
             if flagged:
                 print()
                 print(c("⚠️  AI flagged the following songs:", "yellow"))
@@ -455,25 +455,43 @@ def step_verify(csv_path: Path, music_dir: Path, base_url: str, non_interactive:
                     for issue in r["issues"]:
                         print(f"    → {issue}")
                 print()
-                if ask_yes_no("Delete flagged files and re-download correct versions?", default=False):
-                    deleted = 0
-                    for r in flagged:
-                        if r.get("file"):
-                            bad_file = music_dir / r["file"]
-                            if bad_file.exists():
-                                bad_file.unlink()
-                                print(c(f"  🗑️  Deleted: {bad_file.name}", "dim"))
-                                deleted += 1
-                    print(c(f"\nDeleted {deleted} flagged file(s). Re-downloading...", "yellow"))
-                    # Re-run download
+
+                # Ask per-song which ones to retry
+                retry_songs = []
+                for r in flagged:
+                    bad_file = music_dir / r["file"]
+                    if bad_file.exists():
+                        print(f"\n  File: {bad_file.name}")
+                        if ask_yes_no(f"Delete and retry '{r['artist']} - {r['title']}'?", default=False):
+                            bad_file.unlink()
+                            print(c(f"  🗑️  Deleted: {bad_file.name}", "dim"))
+                            retry_songs.append(r)
+
+                if retry_songs:
+                    # Build a retry CSV with ai_notes for smarter re-download
+                    retry_csv = csv_path.parent / f"{csv_path.stem}-retry.csv"
+                    with open(retry_csv, "w", newline="", encoding="utf-8") as f:
+                        writer = csv.writer(f, delimiter=",")
+                        writer.writerow(["Artist", "Title", "Year", "backcol", "ai_notes"])
+                        for r in retry_songs:
+                            writer.writerow([
+                                r["artist"],
+                                r["title"],
+                                r["year"],
+                                "",
+                                r.get("ai_notes", ""),
+                            ])
+                    print(c(f"\nRetrying {len(retry_songs)} song(s) with smarter search...", "yellow"))
                     dl_cmd = [
                         sys.executable, "tools/deemix_download.py",
-                        "--from-csv", str(csv_path),
+                        "--from-csv", str(retry_csv),
                         "--output", str(music_dir),
                     ]
                     if env.get("openai_key"):
                         dl_cmd.append("--ai-fallback")
-                    run_command(dl_cmd, f"Re-downloading to: {music_dir}")
+                    run_command(dl_cmd, f"Re-downloading {len(retry_songs)} song(s)")
+                    retry_csv.unlink(missing_ok=True)
+
                     # Re-run verification after re-download
                     print(c("\nRe-running verification...", "cyan"))
                     rc = run_command(cmd, "Re-verifying after re-download")
