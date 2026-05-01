@@ -311,18 +311,28 @@ def step_select_music_dir(csv_path: Path) -> Path:
     dirs = discover_music_dirs()
     default_name = csv_path.stem.replace("-local", "").replace("_local", "")
     default_dir = f"music/{default_name}"
+    root = Path(__file__).resolve().parent.parent
+    default_path = root / default_dir
 
+    # If the suggested folder already exists, use it by default
+    if default_path.exists():
+        print(c(f"Using existing folder: {default_dir}", "green"))
+        return default_path
+
+    # Otherwise suggest creating it
+    print(c(f"Suggested folder: {default_dir}", "dim"))
     if dirs:
-        choices = [str(d.relative_to(Path(__file__).resolve().parent.parent)) for d in dirs]
-        # Pre-select matching dir if exists
-        if default_dir in choices:
-            print(c(f"Suggested folder: {default_dir}", "dim"))
+        choices = [str(d.relative_to(root)) for d in dirs]
         choice = ask_choice("Available music folders:", choices, allow_custom=True)
         if choice != "(custom path)":
-            return Path(__file__).resolve().parent.parent / choice
+            return root / choice
+
+    if ask_yes_no(f"Create folder '{default_dir}'?", default=True):
+        default_path.mkdir(parents=True, exist_ok=True)
+        return default_path
 
     path = ask_input("Enter music folder path", default_dir)
-    p = Path(__file__).resolve().parent.parent / path
+    p = root / path
     p.mkdir(parents=True, exist_ok=True)
     return p
 
@@ -413,12 +423,15 @@ def step_verify(csv_path: Path, music_dir: Path, base_url: str, non_interactive:
     if local_csv.name == csv_path.name:
         local_csv = csv_path.parent / f"{csv_path.stem}-local.csv"
 
+    report_json = csv_path.parent / f"{csv_path.stem}-report.json"
+
     cmd = [
         sys.executable, "tools/verify_music.py",
         "--csv", str(csv_path),
         "--music-dir", str(music_dir),
         "--base-url", base_url,
         "--output-csv", str(local_csv),
+        "--report-json", str(report_json),
     ]
     if rename:
         cmd.append("--rename")
@@ -426,6 +439,46 @@ def step_verify(csv_path: Path, music_dir: Path, base_url: str, non_interactive:
         cmd.append("--verify-ai")
 
     rc = run_command(cmd, "Verifying and renaming")
+
+    # Handle flagged songs (exit code 2 = issues found)
+    if rc == 2 and report_json.exists() and not non_interactive:
+        try:
+            import json as _json
+            with open(report_json, "r", encoding="utf-8") as f:
+                report = _json.load(f)
+            flagged = [r for r in report if r.get("issues")]
+            if flagged:
+                print()
+                print(c("⚠️  AI flagged the following songs:", "yellow"))
+                for r in flagged:
+                    print(f"  • {r['artist']} - {r['title']} ({r['year']})")
+                    for issue in r["issues"]:
+                        print(f"    → {issue}")
+                print()
+                if ask_yes_no("Delete flagged files and re-download correct versions?", default=False):
+                    deleted = 0
+                    for r in flagged:
+                        if r.get("file"):
+                            bad_file = music_dir / r["file"]
+                            if bad_file.exists():
+                                bad_file.unlink()
+                                print(c(f"  🗑️  Deleted: {bad_file.name}", "dim"))
+                                deleted += 1
+                    print(c(f"\nDeleted {deleted} flagged file(s). Re-downloading...", "yellow"))
+                    # Re-run download
+                    dl_cmd = [
+                        sys.executable, "tools/deemix_download.py",
+                        "--from-csv", str(csv_path),
+                        "--output", str(music_dir),
+                    ]
+                    if env.get("openai_key"):
+                        dl_cmd.append("--ai-fallback")
+                    run_command(dl_cmd, f"Re-downloading to: {music_dir}")
+                    # Re-run verification after re-download
+                    print(c("\nRe-running verification...", "cyan"))
+                    rc = run_command(cmd, "Re-verifying after re-download")
+        except Exception as e:
+            print(c(f"Could not process flag report: {e}", "red"))
 
     if local_csv.exists():
         return True, local_csv

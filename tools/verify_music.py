@@ -650,6 +650,7 @@ Examples:
     parser.add_argument("--batch-size", type=int, default=env_batch_size, help="Number of songs to verify per API call (default: from .env or 20)")
     parser.add_argument("--fuzzy-threshold", type=float, default=env_fuzzy, help="Minimum fuzzy score to consider a match (0.0-1.0)")
     parser.add_argument("--strict", action="store_true", help="Only accept exact filename matches")
+    parser.add_argument("--report-json", help="Path to write a machine-readable JSON report of all results")
     args = parser.parse_args()
 
     # Validate required args
@@ -874,6 +875,32 @@ Examples:
         write_output_csv(results, fieldnames, out_path, args.base_url)
         print(f"\nCard-ready CSV written to: {out_path}")
         print(f"  -> {sum(1 for r in results if r.mp3)} song(s) with URLs")
+
+    # Write JSON report if requested
+    if args.report_json:
+        report = []
+        for r in results:
+            entry = {
+                "artist": r.csv_song.artist,
+                "title": r.csv_song.title,
+                "year": r.csv_song.year,
+                "match_type": r.match_type,
+                "fuzzy_score": r.fuzzy_score,
+                "issues": r.issues,
+                "suggested_filename": r.suggested_filename,
+            }
+            if r.mp3:
+                entry["file"] = str(r.mp3.path.name)
+                entry["id3_artist"] = r.mp3.artist
+                entry["id3_title"] = r.mp3.title
+                entry["id3_year"] = r.mp3.year
+            else:
+                entry["file"] = None
+            report.append(entry)
+        report_path = Path(args.report_json)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(report_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
 
     # Final summary & exit code
     print("\n" + "=" * 70)

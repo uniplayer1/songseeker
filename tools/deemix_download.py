@@ -184,15 +184,21 @@ def get_deemix_settings(output_path: Path, bitrate: str = "320"):
     }
 
 
-def search_deezer_track(artist: str, title: str) -> dict | None:
-    """Search Deezer public API for a track (no auth required)."""
+def search_deezer_track(artist: str, title: str, strict: bool = True) -> dict | None:
+    """Search Deezer public API for a track (no auth required).
+    strict=True uses quoted artist/track fields.
+    strict=False uses a broader free-text search.
+    """
     if not REQUESTS_AVAILABLE:
         return None
-    q = f'artist:"{artist}" track:"{title}"'
+    if strict:
+        q = f'artist:"{artist}" track:"{title}"'
+    else:
+        q = f"{artist} {title}"
     try:
         resp = requests.get(
             f"{DEEZER_API}/search",
-            params={"q": q, "limit": 3},
+            params={"q": q, "limit": 5},
             timeout=15,
         )
         resp.raise_for_status()
@@ -240,17 +246,19 @@ def _extract_json(text: str) -> str:
 def build_search_suggestion_prompt(missed_songs: list[dict]) -> str:
     """Build a prompt asking the AI for better Deezer search queries."""
     lines = [
-        "You are helping find songs on Deezer. Some searches failed.",
-        "For each song, suggest a simpler artist and title that will match on Deezer.",
-        "Rules:",
+        "You are helping find songs on Deezer. Some searches failed using strict artist+title matching.",
+        "For each song, suggest alternative search strategies that might find the track.",
+        "Consider these approaches:",
         "- Remove featured artists (e.g. 'Dr. Dre feat. Snoop Dogg' → artist: 'Dr. Dre')",
         "- Remove version info like '(Album Version)', '(Extended)', '(Remastered)' from the title",
-        "- Keep the core song title only",
-        "- Simplify punctuation if needed",
+        "- Try alternative spellings or known aliases (e.g. '99 Luftballons' → 'Neunundneunzig Luftballons')",
+        "- Try English vs. original language titles",
+        "- Simplify punctuation or special characters",
+        "- If the artist is a band, try searching with just the song title",
         "",
         "Respond ONLY with a JSON object containing a single key 'results' which is an array.",
         "Each element must be an object in this exact format:",
-        '{\n  "index": 0,\n  "suggested_artist": "Simplified Artist",\n  "suggested_title": "Simplified Title",\n  "reason": "brief explanation"\n}',
+        '{\n  "index": 0,\n  "suggested_artist": "Simplified Artist (or empty string)",\n  "suggested_title": "Simplified Title",\n  "reason": "brief explanation"\n}',
         "",
         "Here are the songs that were not found:",
         "",
@@ -420,12 +428,25 @@ def download_from_csv(csv_path: Path, output_path: Path, arl: str, bitrate: str 
                         print(c("✅ OK", "green"))
                         found += 1
                         missed -= 1
-                    else:
-                        print(c("❌ Download failed", "red"))
-                        still_missed.append(orig)
-                else:
-                    print(c("❌ Still not found", "red"))
-                    still_missed.append(orig)
+                        continue
+
+                # AI suggestion failed — try broader search
+                print("→ broader search", end=" ", flush=True)
+                track = search_deezer_track(new_artist or orig["artist"], new_title, strict=False)
+                time.sleep(delay)
+
+                if track:
+                    track_id = int(track["id"])
+                    print(f"→ ID {track_id}", end=" ", flush=True)
+                    ok = download_single_track(dz, track_id, settings)
+                    if ok:
+                        print(c("✅ OK", "green"))
+                        found += 1
+                        missed -= 1
+                        continue
+
+                print(c("❌ Still not found", "red"))
+                still_missed.append(orig)
 
             missed_songs = still_missed
         else:
