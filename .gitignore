@@ -130,3 +130,17 @@ dist
 .pnp.*
 music/
 *.mp3
+
+# SongSeeker workflow generated files
+playlists/*.csv
+cards/
+reports/
+qr_*.png
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Downloaded API docs
+deepseek_api_implementation/

@@ -1,0 +1,25 @@
+# SongSeeker workflow tools dependencies
+
+# MP3 metadata reading
+mutagen>=1.47.0
+
+# Fuzzy string matching
+rapidfuzz>=3.0.0
+
+# OpenAI API client (supports any OpenAI-compatible endpoint)
+openai>=1.0.0
+
+# Data handling
+pandas>=2.0.0
+
+# Card generator dependencies (also needed if running from root)
+qrcode>=7.0
+reportlab>=4.0
+Pillow>=10.0
+
+# Environment variable loading from .env files
+python-dotenv>=1.0.0
+
+# Deezer API & downloading
+requests>=2.30.0
+deemix>=3.6.0
