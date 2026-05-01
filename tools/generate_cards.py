@@ -64,7 +64,7 @@ def add_qr_code_with_border(c, url, position, box_size, icon_path):
     os.remove(qr_code_path)
 
 
-def add_text_box(c, info, position, box_size, use_color=True,
+def add_text_box(c, info, position, box_size, use_color=True, set_name="",
                  font_artist="Helvetica-Bold", font_size_artist=14,
                  font_title="Helvetica", font_size_title=14,
                  font_year="Helvetica-Bold", font_size_year=50):
@@ -122,8 +122,19 @@ def add_text_box(c, info, position, box_size, use_color=True,
         c.setFont(font_year, font_size_year)
         c.drawString(year_x, year_y, year_text)
 
+    # Set name label in bottom-right corner
+    if set_name:
+        label_font = "Helvetica-Oblique"
+        label_size = 7
+        label_text = str(set_name)
+        c.setFont(label_font, label_size)
+        label_width = c.stringWidth(label_text, label_font, label_size)
+        label_x = x + box_size - label_width - text_indent
+        label_y = y + text_indent
+        c.drawString(label_x, label_y, label_text)
 
-def main(csv_file_path, output_pdf_path, icon_path=None, flip_mode="short", use_color=True):
+
+def main(csv_file_path, output_pdf_path, icon_path=None, flip_mode="short", use_color=True, set_name=""):
     data = pd.read_csv(csv_file_path)
     # Remove leading and trailing whitespaces (compatible with old and new pandas)
     try:
@@ -174,7 +185,7 @@ def main(csv_file_path, output_pdf_path, icon_path=None, flip_mode="short", use_
 
             x = hpageindent + (column_index * box_size)
             y = page_height - vpageindent - (row_index + 1) * box_size
-            add_text_box(c, row, (x, y), box_size, use_color=use_color)
+            add_text_box(c, row, (x, y), box_size, use_color=use_color, set_name=set_name)
 
         c.showPage()
 
@@ -205,5 +216,7 @@ Examples:
                         help="Double-sided flip direction: short=book-style horizontal flip (default), long=calendar-style vertical flip, none=no mirror")
     parser.add_argument("--color", action="store_true", default=False,
                         help="Use backcol values from CSV for colored card backs (default: no color)")
+    parser.add_argument("--set-name", default="",
+                        help="Set name printed in the corner of each card (e.g. 80s-90s)")
     args = parser.parse_args()
-    main(args.csv_file, args.output_pdf, args.icon, args.flip, use_color=args.color)
+    main(args.csv_file, args.output_pdf, args.icon, args.flip, use_color=args.color, set_name=args.set_name)

@@ -485,7 +485,7 @@ def step_verify(csv_path: Path, music_dir: Path, base_url: str, non_interactive:
     return False, Path()
 
 
-def step_generate_cards(local_csv: Path, non_interactive: bool = False) -> bool:
+def step_generate_cards(local_csv: Path, set_name: str = "", non_interactive: bool = False) -> bool:
     print_section("Step 5: Generate Printable Cards")
 
     if not local_csv.exists():
@@ -531,6 +531,8 @@ def step_generate_cards(local_csv: Path, non_interactive: bool = False) -> bool:
         cmd += ["--icon", icon_path]
     if use_color:
         cmd.append("--color")
+    if set_name:
+        cmd += ["--set-name", set_name]
 
     rc = run_command(cmd, f"Generating PDF: {pdf_path}")
 
@@ -614,7 +616,7 @@ def main():
 
     # Step 5: Cards
     if not args.skip_cards and local_csv.exists():
-        step_generate_cards(local_csv, non_interactive=args.non_interactive)
+        step_generate_cards(local_csv, set_name=music_dir.name, non_interactive=args.non_interactive)
 
     # Final message
     print()
