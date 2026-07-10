@@ -70,6 +70,45 @@ Access the app at `http://<YOUR_SERVER_IP>:8887`.
 
 > **Note:** Ensure Docker has read permissions: `chmod -R 755 ./music`
 
+### Docker Usage Examples
+
+#### Using Docker Compose (recommended)
+
+The repository includes a `docker-compose.yml` that builds the image and starts both the web server and backend.
+
+```bash
+git clone https://github.com/uniplayer1/songseeker.git
+cd songseeker
+
+# Prepare your music directory (example)
+mkdir -p music/80s-90s music/rap music/schlager
+# Copy your .mp3 files into the appropriate subfolders
+
+docker compose up -d --build
+```
+
+Access the app at `http://localhost:8887` (or your server's IP).
+
+#### Using plain Docker
+
+Build the image:
+
+```bash
+docker build -t songseeker -f imagebuild/Dockerfile .
+```
+
+Run the container (the backend is still recommended for full functionality like reports):
+
+```bash
+docker run -d \
+  --name songseeker \
+  -p 8887:80 \
+  -v "$(pwd)/music:/usr/share/nginx/html/music:ro" \
+  songseeker
+```
+
+**Note:** For the complete experience (including the backend for reports), use Docker Compose as shown above.
+
 ---
 
 ## 🎵 Adding New Songs — The Easy Way
