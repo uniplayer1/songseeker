@@ -47,50 +47,72 @@ This repository includes the game server **and** a complete workflow for creatin
 *   [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 *   Your music collection in `.mp3` or `.wav` format.
 
-### Installation & Launch
+### Minimal Server (just play music)
+
+If you only want to run the player (no card generation tools):
+
+Create a new directory and save this as `docker-compose.yml`:
+
+```yaml
+services:
+  songseeker:
+    build:
+      context: https://github.com/uniplayer1/songseeker.git
+      dockerfile: imagebuild/Dockerfile
+    ports:
+      - "8887:80"
+    volumes:
+      - ./music:/usr/share/nginx/html/music:ro
+    restart: unless-stopped
+```
+
+Then run:
+
+```bash
+mkdir -p music
+docker compose up -d --build
+```
+
+Access at `http://localhost:8887`.
+
+**Note:** The Python tools for adding new songs are not included. Clone the full repository (see below) if you want to use them.
+
+### Full Setup (with tools)
+
+Clone the repository if you want to use the tools for creating cards:
+
 ```bash
 git clone https://github.com/uniplayer1/songseeker.git
 cd songseeker
 
-# Create music folders
-mkdir -p music/80s music/Schlager music/Movies
+# Prepare music folders
+mkdir -p music/80s-90s music/rap music/schlager
+# Copy your .mp3 files...
 
-# Launch
 docker compose up -d --build
 ```
 
-Access the app at `http://<YOUR_SERVER_IP>:8887`.
+Access at `http://<YOUR_SERVER_IP>:8887`.
 
 > **Note:** Ensure Docker has read permissions: `chmod -R 755 ./music`
 
-### Docker Usage Examples
+### Docker Compose (full repo)
 
-#### Using Docker Compose (recommended)
-
-The repository includes a `docker-compose.yml` that builds the image and starts both the web server and backend.
+The included `docker-compose.yml` starts both the web server and the backend:
 
 ```bash
-git clone https://github.com/uniplayer1/songseeker.git
-cd songseeker
-
-# Prepare your music directory (example)
-mkdir -p music/80s-90s music/rap music/schlager
-# Copy your .mp3 files into the appropriate subfolders
-
 docker compose up -d --build
 ```
 
-Access the app at `http://localhost:8887` (or your server's IP).
+### Plain Docker
 
-#### Using plain Docker
-
-Build the image:
+Build:
 
 ```bash
 docker build -t songseeker -f imagebuild/Dockerfile .
 ```
 
-Run the container (the backend is still recommended for full functionality like reports):
+Run:
 
 ```bash
 docker run -d \
@@ -100,7 +122,7 @@ docker run -d \
   songseeker
 ```
 
-**Note:** For the complete experience (including the backend for reports), use Docker Compose as shown above.
+**Note:** For reports/backend functionality, the full docker-compose is recommended.
 
 ---
 
