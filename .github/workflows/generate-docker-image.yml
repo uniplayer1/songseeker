@@ -3,9 +3,31 @@ name: Build Docker Image
 on:
   push:
     branches: [ "main", "release/*", "develop", "develop/*" ]
+    paths:
+      # This workflow only triggers when files that affect the Docker image change.
+      # This prevents unnecessary runs for unrelated changes (e.g. Python tools, docs).
+      # Relevant paths include the Dockerfile, copied web assets, icons, and this workflow file itself.
+      - 'imagebuild/**'
+      - 'Dockerfile*'
+      - 'index.html'
+      - 'app.js'
+      - 'style.css'
+      - 'manifest.json'
+      - 'icons/**'
+      - '.github/workflows/generate-docker-image.yml'
   pull_request:
     branches: [ "main", "release/*", "develop", "develop/*" ]
-  workflow_dispatch:
+    paths:
+      # Same path filters apply to PRs for efficiency.
+      - 'imagebuild/**'
+      - 'Dockerfile*'
+      - 'index.html'
+      - 'app.js'
+      - 'style.css'
+      - 'manifest.json'
+      - 'icons/**'
+      - '.github/workflows/generate-docker-image.yml'
+  workflow_dispatch:  # Can always be triggered manually from the Actions tab
 
 jobs:
   build:
@@ -26,6 +48,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
           tags: songseeker:test
+          # Caching uses GitHub Actions cache (gha) to speed up repeated builds on the same runner.
+          # The workflow is configured with 'paths' filters (see top of file) so it only runs
+          # when Docker image files are changed — not on every commit.
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

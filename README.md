@@ -16,18 +16,11 @@ This repository includes the game server **and** a complete workflow for creatin
 
 - [Key Features](#key-features)
 - [Quick Start (Game Server)](#quick-start-game-server)
-- [Adding New Songs — The Easy Way](#adding-new-songs--the-easy-way)
-- [Adding New Songs — Step by Step](#adding-new-songs--step-by-step)
-  - [Step 0: One-time Setup](#step-0-one-time-setup)
-  - [Step 1: Create a Playlist CSV](#step-1-create-a-playlist-csv)
-  - [Step 2: Download with Deemix](#step-2-download-with-deemix)
-  - [Step 3: Verify, Match & Rename](#step-3-verify-match--rename)
-  - [Step 4: Generate Cards](#step-4-generate-cards)
-- [Configuration (.env)](#configuration-env)
-- [Getting your ARL token](#getting-your-arl-token)
-- [AI Verification Guide](#ai-verification-guide)
+- [Adding New Songs](#adding-new-songs)
+- [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
 - [Architecture](#architecture)
+- [Development & Quality](#development--quality)
 - [License](#license)
 
 ---
@@ -111,9 +104,12 @@ docker run -d \
 
 ---
 
-## 🎵 Adding New Songs — The Easy Way
+## 🎵 Adding New Songs
+{#adding-new-songs}
 
-### Just run the wizard:
+### The Easy Way: Use the Wizard
+
+Run the interactive wizard to handle everything:
 
 ```bash
 # 1. Install dependencies (once)
@@ -127,30 +123,27 @@ nano .env
 python tools/workflow.py
 ```
 
-The wizard will guide you through every step:
-1. ✅ Select your CSV playlist (with automatic pre-check)
-2. ✅ Download with deemix (optional)
-3. ✅ Verify, match & rename MP3s (with optional AI verification)
-4. ✅ Generate printable PDF cards (choose icon & color options)
+The wizard guides you through:
+1. Select CSV (with pre-check for issues)
+2. Download with deemix (optional)
+3. Verify, match & rename MP3s (AI optional)
+4. Generate printable PDF cards
 
 ---
 
-## 🎵 Adding New Songs — Step by Step
+### Step by Step (Manual)
 
-If you prefer running each step manually, here is the full breakdown.
+Prefer manual control? Here's the breakdown.
 
 ### Step 0: One-time Setup
 
 ```bash
-# Install Python dependencies
 pip install -r tools/requirements.txt
-
-# Create your configuration file
 cp .env.example .env
 nano .env
 ```
 
-Fill in at least the tokens you need. See [Configuration (.env)](#configuration-env) for details.
+See [Configuration](#configuration) for details.
 
 ### Step 1: Create a Playlist CSV
 
@@ -171,217 +164,98 @@ A-ha,Take On Me,1985,"0.75,0.2,0.75"
 - Wrap `backcol` in quotes: `"1,0.5,0.5"` so it doesn't split into columns.
 - **Umlauts (ä, ö, ü, ß)** are fully supported.
 
-**Tip:** Ask ChatGPT/Claude to generate a CSV:
+**Tip:** Ask an LLM to generate a CSV:
 > *"Create a CSV of 20 iconic 80s hits with columns Artist, Title, Year, backcol. Use RGB decimals 0–1 for backcol."*
-
-**Pre-check:** When you run the wizard, it automatically checks your CSV for empty rows, duplicates, and missing years and asks if you want to continue or fix them first.
 
 ### Step 2: Download with Deemix
 
-Download the tracks as MP3s using deemix directly from your CSV playlist.
+Use `deemix_download.py` to fetch MP3s from a CSV (requires `DEEMIX_ARL` in `.env`).
 
 ```bash
-python tools/deemix_download.py \
-  --from-csv playlists/80s.csv \
-  --output music/80s
+python tools/deemix_download.py --from-csv playlists/80s.csv --output music/80s
 ```
 
-This searches Deezer for each track in the CSV and downloads it individually.
-
-**Prerequisites:**
-You need a valid `DEEMIX_ARL` token in your `.env` file. See [Getting your ARL token](#getting-your-arl-token) below.
-
-**Options:**
-- `--bitrate 320` (default) or `--bitrate flac` or `--bitrate 128`
-- `--delay 0.2` — delay between API searches (Deezer rate limit: ~50 req / 5 sec)
-
-After downloading, your folder will look like:
-
-```
-music/80s/
-├── 01 - Mötley Crüe - Girls Girls Girls.mp3
-├── 02 - Bon Jovi - Livin' On A Prayer.mp3
-└── ...
-```
-
-> Don't worry about messy filenames! The next step cleans them up.
+See [Getting your ARL token](#getting-your-arl-token) and tool options for bitrate/delay. Messy filenames are cleaned in the next step.
 
 ### Step 3: Verify, Match & Rename
 
-The `verify_music.py` tool scans your music folder, matches each CSV entry to an MP3, and renames files to the standard format.
+Use `verify_music.py` to match CSV entries to MP3s (exact + fuzzy), optionally with AI verification, rename to standard format, and export a local CSV.
 
 ```bash
-# Dry-run first (recommended)
-python tools/verify_music.py \
-  --csv playlists/80s.csv \
-  --music-dir music/80s \
-  --base-url http://192.168.1.100:8887/music/80s
+# Recommended dry-run first
+python tools/verify_music.py --csv playlists/80s.csv --music-dir music/80s --base-url http://.../music/80s
 
-# With AI verification
-python tools/verify_music.py \
-  --csv playlists/80s.csv \
-  --music-dir music/80s \
-  --base-url http://192.168.1.100:8887/music/80s \
-  --verify-ai
-
-# Rename and generate card CSV
-python tools/verify_music.py \
-  --csv playlists/80s.csv \
-  --music-dir music/80s \
-  --base-url http://192.168.1.100:8887/music/80s \
-  --rename \
-  --output-csv playlists/80s-local.csv
+# With AI + rename
+python tools/verify_music.py --csv playlists/80s.csv --music-dir music/80s --base-url http://... --verify-ai --rename --output-csv playlists/80s-local.csv
 ```
 
-**What it does:**
+Key features: exact/fuzzy matching, AI checks (covers/instrumentals/etc.), auto-rename preserving umlauts, CSV export with local URLs.
 
-| Feature | Description |
-|---------|-------------|
-| **Exact matching** | Finds files already named `YYYY_Artist_Title.mp3`. |
-| **Fuzzy matching** | Matches messy filenames using metadata + filename similarity. |
-| **AI verification** | Sends ID3 tags to AI to confirm it's the correct song (not a cover/instrumental). |
-| **Issue flags** | Reports covers, instrumentals, live recordings, remixes, and missing files. |
-| **Auto-rename** | Renames matched files to clean standard while preserving sub-folders and umlauts. |
-| **CSV export** | Generates a card-ready CSV with local URLs pointing to your server. |
-
-After renaming:
-
-```
-music/80s/
-├── 1987_Mötley_Crüe_Girls_Girls_Girls.mp3
-├── 1986_Bon_Jovi_Livin'_on_a_Prayer.mp3
-└── ...
-```
+See the tool's `--help` for full options.
 
 ### Step 4: Generate Cards
 
 ```bash
-python tools/generate_cards.py \
-  playlists/80s-local.csv \
-  cards-80s.pdf
+python tools/generate_cards.py playlists/80s-local.csv cards-80s.pdf
 ```
 
 **Options:**
-- `--flip short/long/none` — Double-sided alignment (default: `short`, book-style)
-- `--icon icons/icon-96x96.png` — Embed an icon in the QR codes
-- `--color` — Use the `backcol` column from your CSV for colored card backs
+- `--flip short/long/none` (default `short`)
+- `--icon ...` (embed icon in QR)
+- `--color` (use backcol)
+- `--set-name` (label set)
 
-**Double-sided printing:**
-The PDF has QR codes on odd pages and text (Artist/Title/Year) on even pages. When printing double-sided, the cards must align perfectly so each card has QR on front and text on back.
+The PDF produces double-sided cards (QR on one side, info on the other). Test alignment with `--flip long|short|none`.
 
-Most printers default to **"flip on long edge"** (like a calendar). If your cards don't align, try:
-
-```bash
-# Flip on long edge (vertical mirror, top ↔ bottom)
-python tools/generate_cards.py \
-  playlists/80s-local.csv cards-80s.pdf --flip long
-
-# Flip on short edge (horizontal mirror, left ↔ right, like a book)
-python tools/generate_cards.py \
-  playlists/80s-local.csv cards-80s.pdf --flip short
-
-# No mirror (print single-sided or align manually)
-python tools/generate_cards.py \
-  playlists/80s-local.csv cards-80s.pdf --flip none
-```
-
-> **Tip:** Do a test print on plain paper first, hold it up to a light, and check if front/back align before printing on cardstock.
-
-Print the PDF, cut the cards, and play!
+See tool `--help` for details. Print, cut, and play!
 
 ---
 
-## ⚙️ Configuration (.env)
+## ⚙️ Configuration
 
-All persistent settings go into a `.env` file in the project root. The tools load it automatically.
+All settings live in a `.env` file (loaded automatically by the tools).
 
 ### Quick Setup
-
 ```bash
 cp .env.example .env
 nano .env
 ```
 
-### Full Reference
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OPENAI_API_KEY` | *(empty)* | AI API key. Get one at [OpenAI](https://platform.openai.com/api-keys). |
-| `OPENAI_API_BASE` | `https://api.openai.com/v1` | API endpoint. Change for Ollama, LM Studio, etc. |
-| `AI_MODEL` | `gpt-4o-mini` | Model name. Use `gpt-4o` for better quality. |
-| `AI_BATCH_SIZE` | `20` | Songs verified per API call. Lower for local models. |
-| `DEEMIX_ARL` | *(empty)* | Deezer ARL cookie for downloading with deemix. See [Getting your ARL token](#getting-your-arl-token) below. |
-| `DEFAULT_BASE_URL` | *(empty)* | Your SongSeeker root URL (e.g. `http://nas:8887/music`). The genre subfolder is appended automatically (e.g. `.../music/80s`). |
-| `FUZZY_THRESHOLD` | `0.45` | Match strictness (0.0–1.0). |
-| `ICON_PATH` | `icons/icon-96x96.png` | QR code icon for cards. |
+### Main Variables
+| Variable          | Description |
+|-------------------|-------------|
+| `OPENAI_API_KEY`  | AI provider key |
+| `OPENAI_API_BASE` | API endpoint (change for local providers) |
+| `AI_MODEL`        | e.g. `gpt-5.6-luna`, `qwen3.6:7b` |
+| `AI_BATCH_SIZE`   | Batch size for verification |
+| `DEEMIX_ARL`      | Deezer cookie (see below) |
+| `DEFAULT_BASE_URL`| Base URL for generated card links |
+| `FUZZY_THRESHOLD` | Matching strictness |
+| `ICON_PATH`       | Icon for QR codes |
 
 ### Provider Examples
+See the `.env.example` file for full templates (OpenAI, Ollama, LM Studio, etc.).
 
-**OpenAI (default):**
-```env
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
-OPENAI_API_BASE=https://api.openai.com/v1
-AI_MODEL=gpt-4o-mini
-AI_BATCH_SIZE=20
-```
-
-**Ollama (local, free, private):**
-```env
-OPENAI_API_KEY=ollama
-OPENAI_API_BASE=http://localhost:11434/v1
-AI_MODEL=llama3.1
-AI_BATCH_SIZE=5
-```
-
-**LM Studio:**
-```env
-OPENAI_API_KEY=lm-studio
-OPENAI_API_BASE=http://localhost:1234/v1
-AI_MODEL=local-model
-AI_BATCH_SIZE=5
-```
+### Deezer ARL Token
+Required for downloading. Get it from your browser cookies after logging into deezer.com (see the "Getting your ARL token" section for details). A free account works.
 
 ---
 
 ## 🔑 Getting your ARL token
 
-The ARL is a long cookie from your Deezer login session. It lets deemix search and download tracks. **A free Deezer account is sufficient.**
+The `DEEMIX_ARL` is a cookie from your Deezer session (free account is fine). It is required for `deemix_download.py`.
 
-### Option 1 — Browser (recommended)
+**Recommended method (Browser):**
+1. Log into [deezer.com](https://www.deezer.com).
+2. Open DevTools (F12) → Application/Storage → Cookies → deezer.com.
+3. Copy the value of the `arl` cookie (long string).
+4. Add to `.env`: `DEEMIX_ARL=...`
 
-1. Open your browser and go to **https://www.deezer.com**
-2. **Log in** to your Deezer account (create a free one if needed)
-3. Open **Developer Tools**:
-   - Chrome/Edge: `F12` or `Ctrl+Shift+I`
-   - Firefox: `F12` or `Ctrl+Shift+K`
-4. Go to the **Application** (Chrome) or **Storage** (Firefox) tab
-5. In the left sidebar, click **Cookies → https://www.deezer.com**
-6. Find the row with **Name = `arl`**
-7. Double-click the **Value** field and copy the entire string (about 192 characters)
-8. Open your `.env` file and add:
-   ```env
-   DEEMIX_ARL=your_copied_value
-   ```
+**Easier alternatives:**
+- Use the "Deezer ARL" browser extension.
+- Or run the JS snippet in console while logged in: `document.cookie.split('; ').find(r => r.startsWith('arl=')).split('=')[1]`
 
-### Option 2 — Browser Extension (easiest)
-
-Install the **"Deezer ARL"** browser extension (available for Chrome/Firefox). It shows your ARL with one click.
-
-### Option 3 — JavaScript Console
-
-1. Go to https://www.deezer.com and log in
-2. Open Developer Tools → **Console**
-3. Paste this and press Enter:
-   ```javascript
-   document.cookie.split('; ').find(r => r.startsWith('arl=')).split('=')[1]
-   ```
-4. Copy the printed string
-
-### Troubleshooting ARL issues
-
-- **ARL expires:** If downloads stop working, get a fresh ARL (repeat the steps above).
-- **Region locks:** Some tracks may not be available in your country even with a valid ARL.
-- **Account type:** A free Deezer account works fine for deemix.
+**Notes:** ARLs can expire. For region issues, try a different account or VPN. See troubleshooting for download failures.
 
 ---
 
@@ -408,10 +282,10 @@ When you use `--verify-ai`, the AI judges whether each file is:
 
 ### Cost estimate
 
-With **GPT-4o-mini** and **batch size 20**:
+With **gpt-5.6-luna** (or equivalent cheap model) and **batch size 20**:
 - ~20 songs per API call
-- ~$0.01–0.03 per call
-- A 100-song playlist costs roughly **$0.05–0.15**
+- ~$0.01–0.03 per call (prices vary; Luna is the most affordable tier)
+- A 100-song playlist costs roughly **$0.05–0.15** (cheaper tiers like Luna or Terra reduce this significantly)
 
 With **Ollama (local)**: Completely free, but slower.
 
@@ -419,10 +293,13 @@ With **Ollama (local)**: Completely free, but slower.
 
 | Model | Recommended Batch | Notes |
 |-------|-------------------|-------|
-| GPT-4o-mini | 20–30 | Fast, cheap, large context |
-| GPT-4o | 15–20 | Better accuracy |
-| Llama 3.1 (8B) | 5–10 | Local, free, smaller context |
-| Mistral (7B) | 5–10 | Local, free, smaller context |
+| gpt-5.6-luna | 20–30 | Fast, cheapest in the GPT-5.6 family |
+| gpt-5.6-terra | 15–25 | Good balance of quality and cost |
+| gpt-5.6-sol | 10–20 | Flagship model, highest accuracy |
+| Qwen 3.6 27B | 8–15 | Excellent local all-rounder, strong reasoning/coding |
+| Gemma 4 12B/27B | 5–12 | Google's latest, great for multimodal and efficiency |
+| Llama 4 Scout | 5–10 | Meta's latest with very long context (up to 10M) |
+| Mistral Medium 3.5 | 8–15 | Strong European open model, good instruction following |
 
 If the AI returns garbage or truncates, **lower the batch size**.
 
@@ -452,164 +329,71 @@ Examples:
 
 ---
 
-## 📁 Folder Structure Example
+## 📁 Folder Structure (simplified)
 
 ```
 songseeker/
-├── .env                          ← your configuration
-├── .env.example                  ← template
+├── .env
 ├── docker-compose.yml
-├── index.html
-├── app.js
-├── style.css
+├── index.html, app.js, style.css, manifest.json
 ├── icons/
-│   └── icon-96x96.png
-├── music/                        ← downloaded MP3s
-│   ├── 80s/
-│   │   ├── 1987_Mötley_Crüe_Girls_Girls_Girls.mp3
-│   │   └── ...
-│   ├── Schlager/
-│   └── Movies/
-├── playlists/                    ← source CSVs
-│   ├── 80s.csv
-│   └── Schlager.csv
-├── playlists-local/              ← generated card-ready CSVs
-│   ├── 80s-local.csv
-│   └── Schlager-local.csv
-├── cards/                        ← generated PDFs
-│   ├── cards-80s.pdf
-│   └── cards-Schlager.pdf
-├── tools/
-│   ├── requirements.txt
-│   ├── workflow.py               ← interactive wizard ⭐
-│   ├── verify_music.py           ← verify & rename
-│   ├── deemix_download.py        ← download MP3s
-│   └── generate_cards.py         ← PDF card generator
-└── README.md                     ← this file
+├── music/               # your MP3s (mounted at runtime)
+├── playlists/           # source CSVs (e.g. 80s.csv)
+├── tools/               # Python scripts (wizard, verify, download, cards)
+└── imagebuild/          # Dockerfile + nginx config
 ```
 
 ---
 
 ## 💡 Troubleshooting
 
-### "No match found" for a song I know exists
+### Matching issues
+- "No match found": Lower `--fuzzy-threshold` (e.g. 0.3).
+- Too many false matches: Raise threshold or use `--strict`.
+- AI flags a good song: Try a stronger model (`gpt-5.6-terra`/`sol`) or lower batch size. Or skip `--verify-ai` if your source is trusted.
 
-Lower the fuzzy threshold:
-```bash
-python tools/verify_music.py ... --fuzzy-threshold 0.3
-```
+### Deemix / ARL problems
+- Expired/invalid ARL: Get a fresh one (see [Getting your ARL token](#getting-your-arl-token)).
+- Region-locked tracks: Try different account or tweak CSV artist/title (remove "feat.", version info).
+- See tool output for specific errors.
 
-### AI says a correct song is "incorrect"
+### Card printing & scanning
+- Alignment problems: Try `--flip long` or `--flip short`. Test on plain paper first.
+- QR not scanning: Keep icon small (≤300px, transparent bg). Ensure `base-url` is reachable from the scanning device.
 
-Check the `confidence` score. If it's low (< 0.7), the AI is uncertain. You can:
-- Use a better model (`gpt-4o` instead of `gpt-4o-mini`)
-- Lower the batch size
-- Skip AI verification if you trust the source
-
-### Too many false fuzzy matches
-
-Raise the fuzzy threshold:
-```bash
-python tools/verify_music.py ... --fuzzy-threshold 0.6
-```
-
-Or use `--strict` for exact matches only.
-
-### Deemix download fails / ARL invalid
-
-- Make sure you're logged into Deezer in the browser where you copied the ARL.
-- The ARL expires after a while. Get a fresh one from your browser cookies. See [Getting your ARL token](#getting-your-arl-token).
-- Make sure your Deezer account can play the songs (some tracks are region-locked).
-- If a specific song is not found, tweak the artist/title in your CSV:
-  - Remove featured artists: `"Kylie Minogue and Jason Donovan"` → `"Kylie Minogue"`
-  - Remove version info: `"(MTV Unplugged)"` → remove it
-  - Then re-run `deemix_download.py`
-
-### Cards don't align when printing double-sided
-
-This depends on your printer's default duplex mode. Most printers flip on the **long edge** (like a calendar), but the card generator defaults to **short edge** (like a book page).
-
-Fix it by passing the `--flip` option:
-```bash
-# Try this first (most common)
-python tools/generate_cards.py ... --flip long
-
-# If that doesn't work, try the other direction
-python tools/generate_cards.py ... --flip short
-
-# For single-sided printing or manual alignment
-python tools/generate_cards.py ... --flip none
-```
-
-> **Tip:** Print one test page on plain paper, hold it up to a light, and check if front/back align before printing the full deck on cardstock.
-
-### Cards don't scan properly
-
-- The QR icon should be ≤ 300×300 px with a transparent background.
-- Make sure your `base-url` is reachable from the device that scans the QR code.
-
-### Adding start times to songs
-
-Append `?t=16` (or `?start=16`) to the URL in the generated CSV before running `generate_cards.py`. This works for local MP3 playback (the primary use case) and legacy YouTube links.
-
-```csv
-Artist,Title,Year,URL,backcol
-Bon Jovi,Livin' on a Prayer,1986,http://nas:8887/music/80s/1986_Bon_Jovi_Livin'_on_a_Prayer.mp3?t=16,"0.5,1,0.5"
-```
+### Other
+- Start time in cards: Append `?t=16` (or `?start=16`) to URLs in the generated CSV.
+- See individual tool `--help` for more flags.
 
 ---
 
 ## 🏗️ Architecture
 
 *   **Frontend:** Pure HTML5/CSS3/JavaScript (ES Modules).
-*   **Scanning:** [qr-scanner](https://github.com/nimiq/qr-scanner) for fast decoding.
-*   **Metadata:** [jsmediatags](https://github.com/aadsm/jsmediatags) for client-side ID3 parsing.
-*   **Backend:** Node.js micro-service for logging reports.
-*   **Proxy:** Nginx for serving static files and routing API requests.
+*   **Scanning:** [qr-scanner](https://github.com/nimiq/qr-scanner).
+*   **Metadata:** [jsmediatags](https://github.com/aadsm/jsmediatags).
+*   **Backend:** Node.js for reports.
 *   **Card Generator:** Python (ReportLab + qrcode).
-*   **Workflow Tools:** Python utilities (`requests`, `deemix`, `mutagen`, `rapidfuzz`, `openai`).
-
----
-
-## ⚖️ License
-Distributed under the GNU Affero General Public License v3.0. See `LICENSE` for more information.
+*   **Workflow Tools:** Python (`requests`, `deemix`, `mutagen`, `rapidfuzz`, `openai`).
 
 ---
 
 ## 🛠️ Development & Quality
 
 ### Linting & Testing
-Install dev tools:
-
 ```bash
 pip install -r requirements-dev.txt
-npm install   # for JS lint (ESLint)
+npm install
+npm run check   # runs lint + tests
 ```
-
-Run the checks:
-
-```bash
-npm run check          # lint (js + python) + tests
-npm run lint
-npm run test:python
-python -m pytest tests/ -q
-ruff check tools/
-```
-
-We added basic pytest coverage for helpers in `verify_music.py` (delimiter detection, filename sanitization, etc.).
 
 ### Legacy Code
-The frontend (`app.js`) has been slimmed for the **local audio edition**:
-- Removed YouTube player, Hitster CSV lookup, Rockster support, and related parsing.
-- The scanner and local playback path is the only active one.
-- Old reports with `type: YOUTUBE` will still display correctly.
-- Debug button now simulates a local track.
+The frontend was slimmed for local audio only (YouTube/Hitster/Rockster paths removed). Old reports may still reference `YOUTUBE` type.
 
-If you need to support old physical cards that pointed at YouTube/Hitster URLs, keep a copy of an earlier revision.
+### Dependencies
+See `requirements.txt` and `package.json` (dev). Deemix on PyPI is old; community forks may be needed for future work. Node backend updated to a recent LTS.
 
-### Outdated Dependencies
-Dependencies were reviewed in 2026:
-- Python packages bumped to recent stable mins (pandas 3.x compatible, etc.).
-- Docker backend updated from `node:18-alpine` → `node:22-alpine`.
-- CDN assets (Font Awesome, jsmediatags) refreshed.
-- Note: `deemix` on PyPI has not seen updates since 2022; forks may be required for future-proofing.
+---
+
+## ⚖️ License
+Distributed under the GNU Affero General Public License v3.0. See `LICENSE` for more information.
