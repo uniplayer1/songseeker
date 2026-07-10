@@ -59,6 +59,7 @@ services:
     build:
       context: https://github.com/uniplayer1/songseeker.git
       dockerfile: imagebuild/Dockerfile
+    container_name: songseeker
     ports:
       - "8887:80"
     volumes:
@@ -72,6 +73,8 @@ Then run:
 mkdir -p music
 docker compose up -d --build
 ```
+
+This will create a container named `songseeker` with restart policy `unless-stopped`.
 
 Access at `http://localhost:8887`.
 
@@ -93,6 +96,8 @@ docker compose up -d --build
 ```
 
 Access at `http://<YOUR_SERVER_IP>:8887`.
+
+The containers will be named `songseeker` and `songseeker_backend`, both with `restart: unless-stopped`.
 
 > **Note:** Ensure Docker has read permissions: `chmod -R 755 ./music`
 
@@ -117,12 +122,13 @@ Run:
 ```bash
 docker run -d \
   --name songseeker \
+  --restart unless-stopped \
   -p 8887:80 \
   -v "$(pwd)/music:/usr/share/nginx/html/music:ro" \
   songseeker
 ```
 
-**Note:** For reports/backend functionality, the full docker-compose is recommended.
+**Note:** The container is named `songseeker` and has restart policy `unless-stopped`. For reports/backend functionality, the full docker-compose is recommended.
 
 ---
 
