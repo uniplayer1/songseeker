@@ -1,0 +1,48 @@
+# SongSeeker docker build context exclusions
+# Prevents uploading huge music/ and generated files during `docker build`
+
+# Data / generated (music served via volume at runtime)
+music/
+cards/
+playlists/
+*.csv
+*.pdf
+*.mp3
+*.log
+reports/
+
+# Python / build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Git / CI
+.git/
+.gitignore
+.github/
+
+# Env secrets (never needed in image)
+.env
+.env.*
+
+# Node (if any)
+node_modules/
+backend/node_modules/
+
+# Misc large / temp
+logo.png
+*.tgz
+*.tar.gz

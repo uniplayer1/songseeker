@@ -1,25 +1,34 @@
 # SongSeeker workflow tools dependencies
+# Last reviewed/updated: 2026-07 (see below for notes)
 
 # MP3 metadata reading
-mutagen>=1.47.0
+mutagen>=1.48.0
 
 # Fuzzy string matching
-rapidfuzz>=3.0.0
+rapidfuzz>=3.12.0
 
 # OpenAI API client (supports any OpenAI-compatible endpoint)
-openai>=1.0.0
+# Note: openai 1.x and 2.x APIs are largely compatible for chat.completions usage here.
+openai>=1.30.0
 
 # Data handling
-pandas>=2.0.0
+# pandas 3.0+ works (compat code for .map / applymap is present in generate_cards.py)
+pandas>=2.2.0
 
-# Card generator dependencies (also needed if running from root)
-qrcode>=7.0
+# Card generator dependencies
+qrcode>=8.0
 reportlab>=4.0
-Pillow>=10.0
+Pillow>=11.0
 
 # Environment variable loading from .env files
 python-dotenv>=1.0.0
 
 # Deezer API & downloading
-requests>=2.30.0
+requests>=2.32.0
+
+# NOTE on deemix:
+# The last release on PyPI is 3.6.6 (2022). It may still work.
+# If downloads break, consider a maintained community fork, e.g.:
+#   pip install git+https://github.com/bambanah/deemix.git
+# or pin a working version you have tested.
 deemix>=3.6.0

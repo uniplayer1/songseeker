@@ -511,7 +511,7 @@ python tools/generate_cards.py ... --flip none
 
 ### Adding start times to songs
 
-Append `?t=16` to the URL in the generated CSV before running `generate_cards.py`:
+Append `?t=16` (or `?start=16`) to the URL in the generated CSV before running `generate_cards.py`. This works for local MP3 playback (the primary use case) and legacy YouTube links.
 
 ```csv
 Artist,Title,Year,URL,backcol
@@ -534,3 +534,43 @@ Bon Jovi,Livin' on a Prayer,1986,http://nas:8887/music/80s/1986_Bon_Jovi_Livin'_
 
 ## ⚖️ License
 Distributed under the GNU Affero General Public License v3.0. See `LICENSE` for more information.
+
+---
+
+## 🛠️ Development & Quality
+
+### Linting & Testing
+Install dev tools:
+
+```bash
+pip install -r requirements-dev.txt
+npm install   # for JS lint (ESLint)
+```
+
+Run the checks:
+
+```bash
+npm run check          # lint (js + python) + tests
+npm run lint
+npm run test:python
+python -m pytest tests/ -q
+ruff check tools/
+```
+
+We added basic pytest coverage for helpers in `verify_music.py` (delimiter detection, filename sanitization, etc.).
+
+### Legacy Code
+The frontend (`app.js`) has been slimmed for the **local audio edition**:
+- Removed YouTube player, Hitster CSV lookup, Rockster support, and related parsing.
+- The scanner and local playback path is the only active one.
+- Old reports with `type: YOUTUBE` will still display correctly.
+- Debug button now simulates a local track.
+
+If you need to support old physical cards that pointed at YouTube/Hitster URLs, keep a copy of an earlier revision.
+
+### Outdated Dependencies
+Dependencies were reviewed in 2026:
+- Python packages bumped to recent stable mins (pandas 3.x compatible, etc.).
+- Docker backend updated from `node:18-alpine` → `node:22-alpine`.
+- CDN assets (Font Awesome, jsmediatags) refreshed.
+- Note: `deemix` on PyPI has not seen updates since 2022; forks may be required for future-proofing.

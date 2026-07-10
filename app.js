@@ -1,15 +1,13 @@
-import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
+import QrScanner from "https://unpkg.com/qr-scanner@1.4.2/qr-scanner.min.js";
 
 // --- GLOBAL VARIABLES & STATE ---
-let player; // YouTube player instance
+// Focused on local audio playback (the primary mode for this edition).
 let playbackTimer; // Reference for the random playback timeout
-let playbackDuration = 30; // Default playback duration in seconds
 let qrScanner;
-let csvCache = {};
 let lastDecodedText = ""; // Store the last decoded text to prevent double-scans
 let currentScannedLink = ""; // Store the link for the currently active song
 let currentStartTime = 0;
-let currentPlayerType = 'youtube'; // 'youtube' or 'local'
+let currentPlayerType = 'local'; // Always 'local' in this edition
 let audioCtx;
 let audioSource;
 let compressor;
@@ -47,7 +45,6 @@ const UI = {
 document.addEventListener('DOMContentLoaded', () => {
     initQrScanner();
     initEventListeners();
-    initYouTubeApi();
     loadPersistedSettings();
 });
 
@@ -111,56 +108,29 @@ function initEventListeners() {
         applyNormalization();
     });
 
-    // Debug button
+    // Debug / Simulation button - now simulates scanning a local file URL
+    // (useful for testing without a real QR code)
     document.getElementById('debugButton').addEventListener('click', () => {
-        handleScannedLink("https://www.hitstergame.com/de-aaaa0012/237");
+        // Use a real local music URL from the collection (adjust path if needed)
+        const sampleLocal = `${location.origin}/music/80s-90s/1985_A-ha_Take_On_Me.mp3`;
+        handleScannedLink(sampleLocal);
     });
 }
 
 // --- CORE LOGIC: SCANNING ---
-async function handleScannedLink(decodedText) {
+// Only local audio (.mp3 / .wav) is supported in this edition.
+// Legacy YouTube / Hitster / Rockster handling has been removed.
+function handleScannedLink(decodedText) {
     currentScannedLink = decodedText; // Save the link for reporting
-    // Check if local audio
+
     if (decodedText.toLowerCase().endsWith('.mp3') || decodedText.toLowerCase().endsWith('.wav')) {
+        currentStartTime = parseStartTimeFromUrl(decodedText) || 0;
         playLocalAudio(decodedText);
         return;
     }
 
-    let youtubeURL = "";
-    currentPlayerType = 'youtube';
-
-    if (isYoutubeLink(decodedText)) {
-        youtubeURL = decodedText;
-    } else if (isHitsterLink(decodedText)) {
-        const hitsterData = parseHitsterUrl(decodedText);
-        if (hitsterData) {
-            try {
-                const csvContent = await getCachedCsv(`/playlists/hitster-${hitsterData.lang}.csv`);
-                youtubeURL = lookupYoutubeLink(hitsterData.id, csvContent);
-            } catch (error) {
-                console.error("Failed to fetch Hitster CSV:", error);
-            }
-        }
-    } else if (isRockster(decodedText)) {
-        try {
-            const urlObj = new URL(decodedText);
-            const ytCode = urlObj.searchParams.get("yt");
-            if (ytCode) youtubeURL = `https://www.youtube.com/watch?v=${ytCode}`;
-        } catch (error) {
-            console.error("Invalid Rockster URL:", error);
-        }
-    }
-
-    if (youtubeURL) {
-        const youtubeLinkData = parseYoutubeLink(youtubeURL);
-        if (youtubeLinkData) {
-            prepareUIForPlayback();
-            UI.videoId().textContent = youtubeLinkData.videoId;
-            currentStartTime = youtubeLinkData.startTime || 0;
-            player.cueVideoById(youtubeLinkData.videoId, currentStartTime);
-            UI.playStopBtn().disabled = false;
-        }
-    }
+    // Non-local links are ignored in local-only mode.
+    console.warn('Non-local URL scanned (legacy support removed):', decodedText);
 }
 
 function startScanning() {
@@ -172,8 +142,6 @@ function startScanning() {
     // Audio unlock trick for mobile browsers
     localPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
     localPlayer.play().then(() => localPlayer.pause()).catch(() => {});
-    
-    if (player && player.pauseVideo) player.pauseVideo();
 
     resetPlaybackUI();
     UI.startScanBtn().style.display = 'none';
@@ -207,18 +175,14 @@ function togglePlayback() {
     
     if (isPlaying) {
         setPlaybackState(false);
-        if (currentPlayerType === 'local') {
-            UI.localPlayer().pause();
-        } else {
-            player.pauseVideo();
-        }
+        UI.localPlayer().pause();
         clearTimeout(playbackTimer);
     } else {
         setPlaybackState(true);
         if (UI.randomPlaybackCb().checked) {
-            currentPlayerType === 'local' ? playLocalAtRandom() : playVideoAtRandom();
+            playLocalAtRandom();
         } else {
-            currentPlayerType === 'local' ? UI.localPlayer().play() : player.playVideo();
+            UI.localPlayer().play();
         }
     }
 }
@@ -328,6 +292,11 @@ function playLocalAudio(url) {
         UI.playStopBtn().disabled = false;
         UI.playStopBtn().style.background = "var(--accent-play)";
         
+        // Respect explicit start time from URL (?t=xx) if provided
+        if (currentStartTime > 0 && currentStartTime < localPlayer.duration) {
+            localPlayer.currentTime = currentStartTime;
+        }
+
         if (UI.autoplayCb().checked) {
             togglePlayback();
         }
@@ -338,7 +307,7 @@ function playLocalAudio(url) {
 
 function playLocalAtRandom() {
     const lp = UI.localPlayer();
-    const times = calculateRandomTimes(lp.duration);
+    const times = calculateRandomTimes(lp.duration, currentStartTime || 0);
     
     lp.currentTime = times.startTime;
     lp.play()
@@ -356,76 +325,12 @@ function playLocalAtRandom() {
         });
 }
 
-// --- YOUTUBE PLAYER ---
-function initYouTubeApi() {
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    window.onYouTubeIframeAPIReady = () => {
-        player = new YT.Player('player', {
-            height: '0',
-            width: '0',
-            events: {
-                'onReady': (e) => { e.target.setVolume(100); e.target.unMute(); },
-                'onStateChange': onPlayerStateChange
-            }
-        });
-    };
-}
-
-function onPlayerStateChange(event) {
-    if (event.data === YT.PlayerState.CUED) {
-        UI.playStopBtn().style.background = "var(--accent-play)";
-        const videoData = player.getVideoData();
-        UI.videoTitle().textContent = videoData.title;
-        UI.videoDuration().textContent = formatDuration(player.getDuration());
-        UI.videoYear().textContent = "Unknown (YouTube API)";
-
-        if (isIOS()) {
-            player.playVideo();
-        } else if (UI.autoplayCb().checked) {
-            setPlaybackState(true);
-            if (UI.randomPlaybackCb().checked) {
-                playVideoAtRandom();
-            } else {
-                player.playVideo();
-            }
-        }
-    } else if (event.data === YT.PlayerState.PLAYING) {
-        setPlaybackState(true);
-    } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
-        setPlaybackState(false);
-    } else if (event.data === YT.PlayerState.BUFFERING) {
-        UI.playStopBtn().style.background = "orange";
-    }
-}
-
-function playVideoAtRandom() {
-    const times = calculateRandomTimes(player.getDuration(), currentStartTime);
-    
-    player.seekTo(times.startTime, true);
-    player.playVideo();
-
-    clearTimeout(playbackTimer);
-    playbackTimer = setTimeout(() => {
-        player.pauseVideo();
-        setPlaybackState(false);
-    }, times.duration);
-}
-
 // --- API & DATA ---
 async function submitReport() {
     const reason = UI.reportReason().value;
     const title = UI.videoTitle().textContent;
-    const videoIdText = UI.videoId().textContent;
     
-    let resolvedUrl = "";
-    if (currentPlayerType === 'local') {
-        resolvedUrl = UI.localPlayer().src || currentScannedLink;
-    } else {
-        resolvedUrl = videoIdText ? `https://www.youtube.com/watch?v=${videoIdText}` : currentScannedLink;
-    }
+    const resolvedUrl = UI.localPlayer().src || currentScannedLink;
 
     try {
         await fetch('/api/report', {
@@ -531,93 +436,25 @@ function formatReason(reason) {
     return reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
-async function getCachedCsv(url) {
-    if (!csvCache[url]) {
-        const response = await fetch(url);
-        const data = await response.text();
-        csvCache[url] = parseCSV(data);
-    }
-    return csvCache[url];
-}
-
 // --- UTILITIES ---
 function isIOS() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-}
-
-function isHitsterLink(url) {
-    return /^(?:http:\/\/|https:\/\/)?(www\.hitstergame|app\.hitsternordics)\.com\/.+/.test(url);
-}
-
-function isYoutubeLink(url) {
-    return url.startsWith("https://www.youtube.com") || url.startsWith("https://youtu.be") || url.startsWith("https://music.youtube.com/");
-}
-
-function isRockster(url) {
-    return url.startsWith("https://rockster.brettspiel.digital");
-}
-
-function parseHitsterUrl(url) {
-    const gameMatch = url.match(/^(?:http:\/\/|https:\/\/)?www\.hitstergame\.com\/(.+?)\/(\d+)$/);
-    if (gameMatch) {
-        return { lang: gameMatch[1].replace(/\//g, "-"), id: gameMatch[2] };
-    }
-    const nordicMatch = url.match(/^(?:http:\/\/|https:\/\/)?app.hitster(nordics).com\/resources\/songs\/(\d+)$/);
-    if (nordicMatch) {
-        return { lang: nordicMatch[1], id: nordicMatch[2] };
-    }
-    return null;
-}
-
-function lookupYoutubeLink(id, csvContent) {
-    const headers = csvContent[0];
-    const cardIdx = headers.indexOf('Card#');
-    const urlIdx = headers.indexOf('URL');
-    if (cardIdx === -1 || urlIdx === -1) throw new Error('CSV columns missing');
-
-    const targetId = parseInt(id, 10);
-    for (let i = 1; i < csvContent.length; i++) {
-        if (parseInt(csvContent[i][cardIdx], 10) === targetId) {
-            return csvContent[i][urlIdx].trim();
-        }
-    }
-    return null;
-}
-
-function parseCSV(text) {
-    return text.split('\n').filter(l => l.trim()).map(line => {
-        const result = [];
-        let start = 0, inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            if (line[i] === '"' && line[i-1] !== '\\') inQuotes = !inQuotes;
-            else if (line[i] === ',' && !inQuotes) {
-                result.push(line.substring(start, i).trim().replace(/^"(.*)"$/, '$1'));
-                start = i + 1;
-            }
-        }
-        result.push(line.substring(start).trim().replace(/^"(.*)"$/, '$1'));
-        return result;
-    });
-}
-
-function parseYoutubeLink(url) {
-    url = decodeURIComponent(url);
-    const regex = /^https?:\/\/(www\.youtube\.com\/watch\?v=|youtu\.be\/|music\.youtube\.com\/watch\?v=)(.{11})(.*)/;
-    const match = url.match(regex);
-    if (match) {
-        const queryParams = new URLSearchParams(match[3]);
-        const videoId = match[2];
-        const start = normalizeTime(queryParams.get('start') || queryParams.get('t'));
-        const end = normalizeTime(queryParams.get('end'));
-        return { videoId, startTime: start, endTime: end };
-    }
-    return null;
 }
 
 function normalizeTime(val) {
     if (!val) return null;
     const seconds = parseInt(val, 10);
     return isNaN(seconds) ? null : seconds;
+}
+
+function parseStartTimeFromUrl(url) {
+    try {
+        const u = new URL(url, window.location.href);
+        const t = u.searchParams.get('t') || u.searchParams.get('start') || u.searchParams.get('time');
+        return normalizeTime(t);
+    } catch (e) {
+        return null;
+    }
 }
 
 function formatDuration(duration) {

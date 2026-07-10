@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SongSeeker</title>
     
-    <!-- Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Dependencies (updated during 2026 cleanup sweep) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.7/jsmediatags.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 
     <!-- PWA / Icons -->
@@ -59,7 +59,7 @@
                 <label for="cookies">Inspect Cookies</label>
                 <div id="cookielist" class="hidden" style="font-size: 10px; color: var(--text-muted); word-break: break-all; margin-top: 5px;"></div>
                 <br/>
-                <button id="debugButton" class="button" style="padding: 10px 20px; font-size: 12px; margin-top: 10px;">Simulation Test</button>
+                <button id="debugButton" class="button" style="padding: 10px 20px; font-size: 12px; margin-top: 10px;">Simulation Test (local)</button>
             </div>
         </div>
     </div>
@@ -102,8 +102,7 @@
         </a>
     </footer>
 
-    <!-- Hidden Players -->
-    <div id="player"></div> 
+    <!-- Hidden local player -->
     <audio id="local-player" style="display:none;"></audio>
 
     <!-- Modals -->
@@ -137,6 +136,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script type="module" src="app.js?v=20260302"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

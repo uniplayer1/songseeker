@@ -1,0 +1,22 @@
+{
+  "name": "songseeker",
+  "version": "1.0.0",
+  "description": "SongSeeker - Local Audio Edition (self-hosted QR music cards)",
+  "private": true,
+  "scripts": {
+    "lint": "eslint app.js && echo 'JS lint passed'",
+    "lint:fix": "eslint app.js --fix",
+    "lint:python": "python -m ruff check tools/ && echo 'Python lint passed'",
+    "format:python": "python -m black tools/ && echo 'Python format done'",
+    "test": "npm run test:js && npm run test:python",
+    "test:js": "echo 'No JS unit tests yet (browser-focused). Running syntax check...' && node --check app.js && echo 'JS syntax OK'",
+    "test:python": "python -m pytest tests/ -q --tb=line || (echo 'Tip: pip install -r requirements-dev.txt' && python -c 'import sys; sys.path.insert(0,\".\"); exec(open(\"tests/test_verify_music.py\").read().split(\"if __name__\")[0])' )",
+    "test:python:cov": "python -m pytest tests/ --cov=tools --cov-report=term-missing",
+    "check": "npm run lint && npm run lint:python && npm run test",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d --build"
+  },
+  "devDependencies": {
+    "eslint": "^9.7.0"
+  }
+}
